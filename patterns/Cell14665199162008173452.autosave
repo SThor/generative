@@ -1,0 +1,31 @@
+public enum CellType {
+  BLANK, RECT, FILL;
+  public static CellType getRandom() {
+    return values()[(int) (Math.random() * values().length)];
+  }
+}
+
+class Cell {
+  float cellWidth;
+  CellType type;
+
+  Cell(float cellWidth) {
+    this.cellWidth = cellWidth;
+    this.type = CellType.getRandom();
+  }
+
+  void display() {
+    switch(type) {
+    case RECT:
+      stroke(300);
+      noFill();
+      rect(0, 0, cellWidth, cellWidth);
+      break;
+
+    case FILL:
+      noStroke();
+      fill(300);
+      rect(0, 0, cellWidth, cellWidth);
+    }
+  }
+}
