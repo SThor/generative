@@ -12,8 +12,6 @@ float z = 0.0;
 // We will increment zoff differently than xoff and yoff
 float zincrement;
 
-float offset, reach;
-
 float gradientEnd, gradientStart;
 
 color[] mask;
@@ -46,13 +44,11 @@ void setup() {
   
   Ok.p = this;
 
-  increment = 0.01;
-  maskIncrement = 0.01;
-  zincrement = 0.01;
-  gradientEnd = 100;
-  gradientStart = 25;
-  offset = random(260);
-  reach = random(100);
+  increment = width/800000f;
+  maskIncrement = width/800000f;
+  zincrement = width/160000f;
+  gradientEnd = width/8f;
+  gradientStart = width/32f;
   colorIndex = 0;
 }
 
@@ -62,13 +58,13 @@ void draw() {
   }
   if (started) {
     // Optional: adjust noise detail here
-    noiseDetail(8,0.65f);
+    noiseDetail(floor(width/100f), width/1230f);
     
     loadPixels();
     float xMask, yMask;
     
     mask = new color[width*height];
-    if (gradientEnd + z < (width/2)) {
+    if (gradientEnd + z < (width/2f)) {
       gradientEnd += z;
     } else if (gradientStart + z < gradientEnd) {
       gradientStart += z;
@@ -105,41 +101,10 @@ void draw() {
         } else {
           yMask = 1;
         }
-        // mask[x+y*width] = color(map(xMask, -1, 1, 0, 360));
-        // if (noise > map(y-z*100, 0, height, -1, 1) || noise > xMask) {
-        //   mask[x+y*width] = color(0);
-        // } else {
-        //   mask[x+y*width] = color(255);
-        // }
-        if (noise > yMask || noise > xMask) {
-          mask[x+y*width] = color(0);
-        } else {
-          mask[x+y*width] = color(255);
-        }
         
-
-        // TODO:
-        /*
-          - trois carrés alignés verticalement : 1er et 3e en miroir:
-            - faire varier le seuil pour dessiner le bruit verticalement, en fonction de y
-            - utiliser un bruit comme masque pour savoir où dessiner
-            - dessiner juste des ronds au crayon, positions aléatoires, (densité variable en fonction de y ?)
-            - couleur des ronds voire de leurs points en fonction d'un autre bruit plus dense, en dégradé
-          - aucune idée pour le carré central, mais très coloré et plein
-        */
-      }
-    }
-
-    // System.arraycopy(mask, 0, pixels, 0, mask.length);
-
-    for (int x = 0; x < width; x++) {
-      for (int y = 0; y < height; y++) {
-        float noise = (float)noiseGenerator.noise(x*increment,y*increment,z+100);
-        
-        if (mask[x+y*width] != color(0)) {
-          pixels[x+y*width] = lerpColor(palette[colorIndex], palette[(colorIndex+1)%palette.length], noise);
-        } else {
-          //pixels[x+y*width] = palette[3];
+        if (noise < yMask && noise < xMask) {
+          float noise2 = (float)noiseGenerator.noise(x*increment,y*increment,z+(width/8f));
+          pixels[x+y*width] = lerpColor(palette[colorIndex], palette[(colorIndex+1)%palette.length], noise2);
         }
       }
     }
@@ -148,22 +113,15 @@ void draw() {
     
     z += zincrement;
 
-    if(frameCount%20 == 0){
+    if(frameCount%(width/40f) == 0){
       colorIndex = (++colorIndex)%palette.length;
     }
-  } else {
-
+  } else { // not started
     paletteWidth = width / palette.length;
     for(int i=0; i<palette.length; i++) {
       fill(palette[i]);
       rect(i*paletteWidth, 0, (i+1)*paletteWidth, height);
     }
-
-    // for (int i=0; i<50; i++) {
-      // stroke(Ok.HSL(offset+2*i, 100, 80));
-      // stroke(color(map(i, 0, 50, offset, offset+reach), 100, 80));
-      //line(i,0,i,10);
-    // }
   }
 }
 
@@ -175,12 +133,9 @@ void mouseClicked() {
     finished = wasFinished;
   } else {
     started = true;
-    //background(palette[2]);
   }
 }
 
 void keyPressed() {
   palette = paletteGenerator.getPalette();
-  offset = random(260);
-  reach = random(100);
 }
