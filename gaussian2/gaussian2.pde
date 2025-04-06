@@ -58,7 +58,7 @@ void draw() {
   }
   if (started) {
     // Optional: adjust noise detail here
-    noiseDetail(floor(width/100f), width/1230f);
+    noiseDetail(floor(width/10f), width/123f);
     
     loadPixels();
     float xMask, yMask;
@@ -84,8 +84,8 @@ void draw() {
           xMask = map(x, gradientStart, gradientEnd, -1, 1);
         } else if (x > width - gradientStart) {
           xMask = -1;
-        } else if (x > width - gradientEnd - gradientStart) {
-          xMask = map(x, width - gradientEnd - gradientStart, width - gradientStart, 1, -1);
+        } else if (x > width - gradientEnd) {
+          xMask = map(x, width - gradientEnd, width - gradientStart, 1, -1);
         } else {
           xMask = 1;
         }
@@ -96,8 +96,8 @@ void draw() {
           yMask = map(y, gradientStart, gradientEnd, -1, 1);
         } else if (y > height - gradientStart) {
           yMask = -1;
-        } else if (y > height - gradientEnd - gradientStart) {
-          yMask = map(y, height - gradientEnd - gradientStart, height - gradientStart, 1, -1);
+        } else if (y > height - gradientEnd ) {
+          yMask = map(y, height - gradientEnd, height - gradientStart, 1, -1);
         } else {
           yMask = 1;
         }
