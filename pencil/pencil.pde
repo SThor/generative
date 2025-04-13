@@ -1,3 +1,6 @@
+import paperandpencil.*;
+
+PaperAndPencil pp;
 float topMargin = 0, leftMargin = 0;
 float xOffset = 340;
 float yOffset = 310;
@@ -7,70 +10,6 @@ float x1, y1, x2, y2 = 0;
 color pencilColor = color(0, 0, 0, 30);
 int step = 0;
 boolean printMode = false;
-
-void paper() {
-  noStroke();
-  for (int i = 0; i < 100000; ++i) {
-    fill(random(360), random(100), random(100), random(20));
-    float x = random(width);
-    float y = random(height);
-    circle(x, y, random(2));
-  }
-  loadPixels();
-  for ( int i=0; i<pixels.length; i+=1) {
-    pixels[i] = lerpColor(pixels[i], color(360), random(.5));
-  }
-  updatePixels();
-}
-
-
-void pencilLine(float x1, float y1, float x2, float y2) {
-  pencilLine(x1, y1, x2, y2, false);
-}
-
-void pencilLine(float x1, float y1, float x2, float y2, boolean adjustForLength) {
-  noStroke();
-  float x, y;
-  float increment = 0.0001;
-  if (adjustForLength) {
-    increment = 0.15 / dist(x1, y1, x2, y2);
-  }
-  for (float amt = 0; amt < 1; amt += increment) {
-    x = lerp(x1, x2, amt);
-    y = lerp(y1, y2, amt);
-    //circle(x,y,amt*100);
-    if (x>=leftMargin && x<=width-leftMargin && y>=topMargin && y<=height-topMargin)
-      circle(x+random(2), y+random(2), random(2));
-  }
-}
-
-void pencilCircle(float centerX, float centerY, float diameter) {
-  pencilArc(centerX, centerY, diameter, 0, TWO_PI);
-}
-
-void pencilCircle(float centerX, float centerY, float diameter, boolean fade) {
-  pencilArc(centerX, centerY, diameter, 0, TWO_PI, fade);
-}
-
-void pencilArc(float centerX, float centerY, float diameter, float startAngle, float endAngle) {
-  pencilArc(centerX, centerY, diameter, startAngle, endAngle, false);
-}
-
-void pencilArc(float centerX, float centerY, float diameter, float startAngle, float endAngle, boolean fade) {
-  noStroke();
-  float x, y;
-  color end = color(0, 0, 0, 0);
-  for (float theta = startAngle; theta < endAngle; theta+=0.3/diameter) {
-    if (fade) {
-      fill(hue(pencilColor), saturation(pencilColor), brightness(pencilColor), alpha(pencilColor) * (theta-startAngle)/(endAngle - startAngle));
-    }
-    x= centerX + diameter/2*cos(theta);
-    y= centerY + diameter/2*sin(theta);
-    if (x>=leftMargin && x<=width-leftMargin && y>=topMargin && y<=height-topMargin) {
-      circle(x+random(2), y+random(2), random(2));
-    }
-  }
-}
 
 void angles() {
   //fill(random(360), random(100), random(100), 2);
@@ -82,14 +21,14 @@ void angles() {
   for (float theta = 0; theta<QUARTER_PI; theta+=0.008) {
     x=x0 + r*cos(theta);
     y=y0 + r*sin(theta);
-    pencilLine(x0, y0, x, y);
+    pp.pencilLine(x0, y0, x, y, false);
   }
   x0 = width - offset;
   y0 = height - offset;
   for (float theta = PI; theta<(PI+QUARTER_PI); theta+=0.008) {
     x=x0 + r*cos(theta);
     y=y0 + r*sin(theta);
-    pencilLine(x0, y0, x, y);
+    pp.pencilLine(x0, y0, x, y, false);
   }
   //pencilLine(offset, offset, offset, height - offset); //left
   //pencilLine(width - offset, offset, width - offset, height - offset); //right
@@ -109,23 +48,27 @@ void setup() {
 }
 
 void init() {
+  pp = new PaperAndPencil(this);
   stroke(0);
   if (printMode) {
     background(360);
     pencilColor = color(0, 0, 0, 0);
   } else {
     background(350, 100);
-    paper();
+    pp.paper();
     pencilColor = color(0, 0, 0, 30);
   }
+
+  pp.setPencilColor(pencilColor);
+  pp.setPrintMode(printMode);
 
   //fill(random(360), random(100), random(100), 2);
   fill(pencilColor);
 
-  pencilLine(xOffset, yOffset - 200, xOffset, height - yOffset + 45, true); //left
-  pencilLine(width - xOffset, yOffset - 90, width - xOffset, height - yOffset + 250, true); //right
-  pencilLine(xOffset - 50, yOffset, width - xOffset + 30, yOffset, true); //top
-  pencilLine(xOffset - 13, height - yOffset, width - xOffset + 8, height - yOffset, true); //bottom
+  pp.pencilLine(xOffset, yOffset - 200, xOffset, height - yOffset + 45, false); //left
+  pp.pencilLine(width - xOffset, yOffset - 90, width - xOffset, height - yOffset + 250, false); //right
+  pp.pencilLine(xOffset - 50, yOffset, width - xOffset + 30, yOffset, false); //top
+  pp.pencilLine(xOffset - 13, height - yOffset, width - xOffset + 8, height - yOffset, false); //bottom
 
   float constantStep, variableStep;
   if (printMode) {
@@ -140,9 +83,9 @@ void init() {
   maxDiameter = width - xOffset * 2;
   while (d < maxDiameter) {
     fill(pencilColor);
-    pencilCircle(width/2, height/2, d);
+    pp.pencilCircle(width/2, height/2, d, false);
     if (!printMode)
-      pencilArc(width/2, height/2, d, PI - random(QUARTER_PI), PI + random(QUARTER_PI), true);
+      pp.pencilArc(width/2, height/2, d, PI - random(QUARTER_PI), PI + random(QUARTER_PI), true);
     //i += 0.2;
     //d += 5 + noise(i) * 5;
     d += constantStep + random(variableStep);
@@ -151,9 +94,9 @@ void init() {
   d = minDiameter;
   while (d < maxDiameter) {
     fill(pencilColor);
-    pencilCircle(width/2, yOffset + maxDiameter/2, d);
+    pp.pencilCircle(width/2, yOffset + maxDiameter/2, d, false);
     if (!printMode)
-      pencilArc(width/2, yOffset + maxDiameter/2, d, PI - random(QUARTER_PI), PI + random(QUARTER_PI), true);
+      pp.pencilArc(width/2, yOffset + maxDiameter/2, d, PI - random(QUARTER_PI), PI + random(QUARTER_PI), true);
     //i += 0.2;
     //d += 5 + noise(i) * 5;
     d += constantStep + random(variableStep);
@@ -162,9 +105,9 @@ void init() {
   d = minDiameter;
   while (d < maxDiameter) {
     fill(pencilColor);
-    pencilCircle(width/2, height - yOffset - maxDiameter/2, d);
+    pp.pencilCircle(width/2, height - yOffset - maxDiameter/2, d, false);
     if (!printMode)
-      pencilArc(width/2, height - yOffset - maxDiameter/2, d, PI - random(QUARTER_PI), PI + random(QUARTER_PI), true);
+      pp.pencilArc(width/2, height - yOffset - maxDiameter/2, d, PI - random(QUARTER_PI), PI + random(QUARTER_PI), true);
     //i += 0.2;
     //d += 5 + noise(i) * 5;
     d += constantStep + random(variableStep);
@@ -177,11 +120,11 @@ boolean flipCoin() {
 
 void randomFills() {
   if (flipCoin())
-    fillPencilCircle(width/2, height/2, minDiameter);
+    pp.fillPencilCircle(width/2, height/2, minDiameter);
   if (flipCoin())
-    fillPencilCircle(width/2, yOffset + maxDiameter/2, minDiameter);
+    pp.fillPencilCircle(width/2, yOffset + maxDiameter/2, minDiameter);
   if (flipCoin())
-    fillPencilCircle(width/2, height - yOffset - maxDiameter/2, minDiameter);
+    pp.fillPencilCircle(width/2, height - yOffset - maxDiameter/2, minDiameter);
   if (flipCoin())
     fillOutside(width/2, yOffset + maxDiameter/2, maxDiameter, PI, TWO_PI);
   if (flipCoin())
@@ -199,7 +142,7 @@ void fillCircles() {
 void fillPencilCircle(float centerX, float centerY, float diameter) {
   float increment = printMode ? 1.3 : 1.2;
   for (float d = 2; d<diameter; d+=increment) {
-    pencilCircle(centerX, centerY, d);
+    pp.pencilCircle(centerX, centerY, d, false);
   }
 }
 
@@ -253,7 +196,7 @@ void mouseDragged() {
 
 void mouseReleased() {
   fill(pencilColor);
-  pencilLine(x1, y1, x2, y2, true);
+  pp.pencilLine(x1, y1, x2, y2, false);
 }
 
 

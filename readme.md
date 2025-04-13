@@ -18,6 +18,11 @@ A repository of my Processing-based generative art projects.
 
 - everything else is a generative art project
 
+## Depencencies
+
+- [Processing](https://processing.org/) - The programming environment and language used for generative art creation.
+- [PaperAndPencil](https://github.com/SThor/PaperAndPencil) - A library that I've created for creating paper textures and pencil-like drawing effects. Used in a few projects (e.g., `pencil/` and `tube/`). See the readme in that repository for more details on how to install and use it.
+
 ## Getting Started
 
 To create a new project:
@@ -30,19 +35,19 @@ To create a new project:
 ## Gallery
 
 ![Color Growth](colorGrowth/2025-4-5-16-3-12.png)
-*5 April 2025, 13:03*
+*Color Growth, 5 April 2025*
 
 ![Gaussian](gaussian2/2022-12-24_2022-11-41-58-.png)
-*24 December 2022, 11:41*
+*Gaussian, 24 December 2022*
 
 ![Lines](lines2/2022-3-26-20-52-24.png)
-*26 March 2022, 20:52*
+*Lines, 26 March 2022*
 
 ![Pencil](pencil/2022-2-16-17-5-22.png)
-*16 February 2022, 17:05*
+*Pencil, 16 February 2022*
 
 ![Tube](tube/2022-3-26-19-28-51.png)
-*26 March 2022, 19:28*
+*Tube, 26 March 2022*
 
 ## Social Media
 
@@ -51,4 +56,3 @@ Find more of my generative art at:
 - Instagram: [@esstepaper](https://instagram.com/esstepaper)
 - Pixelfed: [@silmathoron](https://pixelfed.fr/silmathoron)
 - Reddit: [u/silmathoron](https://reddit.com/user/silmathoron)
-
