@@ -1,3 +1,6 @@
+import paperandpencil.*;
+
+PaperAndPencil pp;
 float topMargin = 0, leftMargin = 0;
 float xOffset = 340;
 float yOffset = 310;
@@ -9,69 +12,6 @@ color pencilColor = color(0, 0, 0, 0);
 int step = 2;
 int substep = 2;
 float radius = 400;
-
-void paper() {
-  noStroke();
-  for (int i = 0; i < 100000; ++i) {
-    fill(random(360), random(100), random(100), random(20));
-    float x = random(width);
-    float y = random(height);
-    circle(x, y, random(2));
-  }
-  loadPixels();
-  for ( int i=0; i<pixels.length; i+=1) {
-    pixels[i] = lerpColor(pixels[i], color(360), random(.5));
-  }
-  updatePixels();
-}
-
-void pencilLine(float x1, float y1, float x2, float y2) {
-  pencilLine(x1, y1, x2, y2, true);
-}
-
-void pencilLine(float x1, float y1, float x2, float y2, boolean adjustForLength) {
-  noStroke();
-  float x, y;
-  float increment = 0.0001;
-  if (adjustForLength) {
-    increment = 0.15 / dist(x1, y1, x2, y2);
-  }
-  for (float amt = 0; amt < 1; amt += increment) {
-    x = lerp(x1, x2, amt);
-    y = lerp(y1, y2, amt);
-    //circle(x,y,amt*100);
-    if (x>=leftMargin && x<=width-leftMargin && y>=topMargin && y<=height-topMargin)
-      circle(x+random(2), y+random(2), random(2));
-  }
-}
-
-void pencilCircle(float centerX, float centerY, float diameter) {
-  pencilArc(centerX, centerY, diameter, 0, TWO_PI);
-}
-
-void pencilCircle(float centerX, float centerY, float diameter, boolean fade) {
-  pencilArc(centerX, centerY, diameter, 0, TWO_PI, fade);
-}
-
-void pencilArc(float centerX, float centerY, float diameter, float startAngle, float endAngle) {
-  pencilArc(centerX, centerY, diameter, startAngle, endAngle, false);
-}
-
-void pencilArc(float centerX, float centerY, float diameter, float startAngle, float endAngle, boolean fade) {
-  noStroke();
-  float x, y;
-  color end = color(0, 0, 0, 0);
-  for (float theta = startAngle; theta < endAngle; theta+=0.3/diameter) {
-    if (fade) {
-      fill(0, 0, 0, 30 * (theta-startAngle)/(endAngle - startAngle));
-    }
-    x= centerX + diameter/2*cos(theta);
-    y= centerY + diameter/2*sin(theta);
-    if (x>=leftMargin && x<=width-leftMargin && y>=topMargin && y<=height-topMargin) {
-      circle(x+random(2), y+random(2), random(2));
-    }
-  }
-}
 
 float triangleHeight(float base) {
   return sqrt(3.0)*base/2.0;
@@ -95,6 +35,7 @@ void mainStep() {
 }
 
 void setup() {
+  pp = new PaperAndPencil(this);
   colorMode(HSB, 360, 100, 100, 100);
   //background(350, 100);
   stroke(0);
@@ -104,7 +45,7 @@ void setup() {
 }
 
 void simpleRosace(float centerX, float centerY, float diameter, int subcircles, float startAngle) {
-  pencilCircle(centerX, centerY, diameter);
+  pp.pencilCircle(centerX, centerY, diameter, false);
   float angle = TWO_PI/subcircles;
   float subdiameter = diameter/2;
   float x, y, subAngle;
@@ -112,7 +53,7 @@ void simpleRosace(float centerX, float centerY, float diameter, int subcircles, 
     subAngle = startAngle + i*angle;
     x = centerX + subdiameter/2*cos(subAngle);
     y = centerY + subdiameter/2*sin(subAngle);
-    pencilArc(x, y, subdiameter, subAngle - HALF_PI - PI/6, subAngle + HALF_PI + PI/6);
+    pp.pencilArc(x, y, subdiameter, subAngle - HALF_PI - PI/6, subAngle + HALF_PI + PI/6, false);
   }
 }
 
@@ -141,7 +82,7 @@ void gothicArc(float centerX, float centerY, float radius, boolean showTail, flo
       y1 = a * x1+b;
       x2 = x - radius/2;
       y2 = a * x2+b;
-      pencilLine(x1, y1, x2, y2);
+      pp.pencilLine(x1, y1, x2, y2, false);
     }
     a = -a;
     for (float centerOffset = -radius; centerOffset < tail + radius; centerOffset += 40) {
@@ -152,7 +93,7 @@ void gothicArc(float centerX, float centerY, float radius, boolean showTail, flo
       y1 = a * x1+b;
       x2 = x - radius/2;
       y2 = a * x2+b;
-      pencilLine(x1, y1, x2, y2);
+      pp.pencilLine(x1, y1, x2, y2, false);
     }
     fill(pencilColor);
   }
@@ -160,18 +101,18 @@ void gothicArc(float centerX, float centerY, float radius, boolean showTail, flo
 
 void gothicArc(float centerX, float centerY, float radius, boolean showTail, float tail, boolean subarcs) {
   if (showTail) {
-    pencilLine(centerX - radius/2, centerY, centerX - radius/2, centerY + tail);
-    pencilLine(centerX + radius/2, centerY, centerX + radius/2, centerY + tail);
+    pp.pencilLine(centerX - radius/2, centerY, centerX - radius/2, centerY + tail, false);
+    pp.pencilLine(centerX + radius/2, centerY, centerX + radius/2, centerY + tail, false);
   }
 
-  pencilArc(centerX - radius/2, centerY, 2*radius, -PI/3, 0);
-  pencilArc(centerX + radius/2, centerY, 2*radius, PI, PI+PI/3);
+  pp.pencilArc(centerX - radius/2, centerY, 2*radius, -PI/3, 0, false);
+  pp.pencilArc(centerX + radius/2, centerY, 2*radius, PI, PI+PI/3, false);
 
   if (subarcs) {
-    pencilArc(centerX, centerY, radius, PI, PI+PI/3);
-    pencilArc(centerX + radius/4, centerY - triangleHeight(radius/2), radius, PI, PI+PI/3);
-    pencilArc(centerX - radius/4, centerY - triangleHeight(radius/2), radius, -PI/3, 0);
-    pencilArc(centerX, centerY, radius, -PI/3, 0);
+    pp.pencilArc(centerX, centerY, radius, PI, PI+PI/3, false);
+    pp.pencilArc(centerX + radius/4, centerY - triangleHeight(radius/2), radius, PI, PI+PI/3, false);
+    pp.pencilArc(centerX - radius/4, centerY - triangleHeight(radius/2), radius, -PI/3, 0, false);
+    pp.pencilArc(centerX, centerY, radius, -PI/3, 0, false);
   }
 }
 
