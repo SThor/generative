@@ -1,3 +1,5 @@
+import yash.oklab.*;  
+
 // Configuration parameters
 final int WIDTH = 1000;
 final int HEIGHT = 1000;
@@ -11,6 +13,7 @@ final int RIDGES = 3;
 // Global variables
 String finalImagePath = null;
 float m_noiseOffset = 0;
+float m_hue = 0;
 
 void settings() {
   size(WIDTH, HEIGHT, P2D);
@@ -19,8 +22,9 @@ void settings() {
 
 void setup() {
   colorMode(RGB, 255, 255, 255);
-  background(0);
   noiseDetail(4, 0.5);
+  Ok.p = this;
+  resetSketch();
 }
 
 float noisyRadius(float baseRadius, float angle, float noiseOffset) {
@@ -50,8 +54,8 @@ void drawRidge(float radius, float noiseOffset) {
       continue;
     }
     circle(rx + random(0, SPRAY_RADIUS), 
-            ry + random(0, SPRAY_RADIUS), 
-            random(2, 3));
+           ry + random(0, SPRAY_RADIUS), 
+           random(2, 3));
     i++;
   }
 }
@@ -65,6 +69,13 @@ void draw() {
   fill(255, 50); // Low opacity white
   
   for (int i = 0; i < RIDGES; i++) {
+    // H = Hue (0-360), S = Saturation (0-100), V = Value (0-100), L = Lightness (0-100) (unused here), A = Alpha (0-100).
+    fill(Ok.HSV(
+      m_hue, 
+      (i + 1.0f / RIDGES) * 100.0f, 
+      (i + 1.0f / RIDGES) * 100.0f, 
+      30
+    ));
     drawRidge(BASE_RADIUS + 100 * i, m_noiseOffset + 10 * i);
   }
   
@@ -99,5 +110,6 @@ void resetSketch() {
   background(0);
   frameCount = 0;
   finalImagePath = null;
+  m_hue = random(360);
   loop();
 }
