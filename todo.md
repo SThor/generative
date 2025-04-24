@@ -9,10 +9,6 @@
     - [x] Use lib in projects
     - [x] Create git repo
     - [x] in generative repo, add a 'dependency' section linking back to the PaperAndPencil repo
-  - [ ] Color
-    - [ ] Create lib
-    - [ ] Create example project
-    - [ ] Use lib in projects
   - [ ] Utils (saving, etc.)
     - [ ] Create lib
     - [ ] Create example project
@@ -20,3 +16,4 @@
 - [ ] colorGrowth:
   - [ ] Try it with a more complex color system
 - [ ] grotto
+  - [ ] try reversing the drawing process, creating dark shadows instead of light ridges
