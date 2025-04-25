@@ -3,6 +3,12 @@ import paperandpencil.*;
 // Configuration parameters
 final int WIDTH = 1000;
 final int HEIGHT = 1000;
+final int MARGIN = 50;
+final int SPACING = 20; // Space between cells
+final int NUM_CELLS = 4; // Number of cells in each row and column
+final int CELL_SIZE = (WIDTH - 2 * MARGIN - (NUM_CELLS - 1) * SPACING) / NUM_CELLS; // Size of each cell
+final int OUTLINE_COLOR = color(0, 0, 0, 70); // Color for the outline of the rectangles
+final float NOISE_SCALE = 0.008; // Scale for the noise function
 
 // Global variables
 String finalImagePath = null;
@@ -16,21 +22,72 @@ void settings() {
 }
 
 void setup() {
-  colorMode(RGB, 255, 255, 255);
-  background(0);
+  colorMode(HSB, 360, 100, 100, 100);
+}
 
-  // Draw a grid of rectangles
-  for (int i = 0; i < width; i += 50) {
-    for (int j = 0; j < height; j += 50) {
-      pp.setPencilColor(color(random(255), random(255), random(255), random(100, 255)));
-      pp.rect(i, j, 50, 50);
+void drawRect(int col, int row) {
+  float cellX = col * (CELL_SIZE + SPACING);
+  float cellY = row * (CELL_SIZE + SPACING);
+  pushMatrix();
+  translate(cellX, cellY);
+  pp.setPencilColor(OUTLINE_COLOR);
+  pp.rect(0, 0, CELL_SIZE, CELL_SIZE);
+
+  for (int x = 0; x < CELL_SIZE+1; x++) {
+    for (int y = 0; y < CELL_SIZE+1; y++) {
+      if ((col + row) % 2 == 0) {
+        drawBands(x, y);
+      } else {
+        drawLines(x, y);
+      }
     }
+  }
+  popMatrix();
+}
+
+void drawBands(float x, float y) {
+  float noise = noise(x * NOISE_SCALE, y * NOISE_SCALE);
+  int contourLevel = round(noise * 10); // Convert 0-1 to 0-10 and round
+      
+  if (contourLevel % 2 == 0) { // Only draw on even levels
+    pp.setPencilColor(color(0, 0, 0, noise * 100)); // Set color based on noise
+    // pp.setPencilSpread(1);
+    pp.dot(x, y);
+  }
+}
+
+void drawLines(float x, float y) {
+  float noise = noise(x * NOISE_SCALE, y * NOISE_SCALE);
+  float noiseRight = noise((x + 1) * NOISE_SCALE, y * NOISE_SCALE);
+  float noiseDown = noise(x * NOISE_SCALE, (y + 1) * NOISE_SCALE);
+  
+  int currentLevel = round(noise * 10);
+  int rightLevel = round(noiseRight * 10);
+  int downLevel = round(noiseDown * 10);
+  
+  // Draw a dot if we're on a contour line boundary
+  if (currentLevel != rightLevel || currentLevel != downLevel) {
+    pp.setPencilColor(color(0, 0, 0, 70));
+    pp.setPencilSpread(2f);
+    pp.dot(x, y);
   }
 }
 
 void draw() {
+  background(350, 100);
+  pp.paper();
+  pushMatrix();
+  translate(MARGIN, MARGIN);
 
-  if (false) { // Replace with your condition to stop drawing
+  // Draw a grid of rectangles
+  for (int row = 0; row < NUM_CELLS; row++) {
+    for (int col = 0; col < NUM_CELLS; col++) {
+      drawRect(col, row);
+    }
+  }
+  popMatrix();
+  
+  if (true) {
     // Save final frame to a temporary file
     finalImagePath = "final_frame_temp.png";
     save(finalImagePath);
@@ -64,7 +121,6 @@ void saveImage() {
 }
 
 void resetSketch() {
-  background(0);
   frameCount = 0;
   finalImagePath = null;
   loop();
