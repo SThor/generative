@@ -42,6 +42,7 @@ String finalImagePath = null;
 PaperAndPencil pp;
 ArrayList<Integer> availableVariations;
 ArrayList<SpecialCell> specialCells;
+boolean showLine; // Flag to control which effect is shown
 
 int BACKGROUND_COLOR = color(350, 100); // Background color in HSB(360, 100, 100)
 int OUTLINE_COLOR = color(0, 0, 0, 70); // Color for the outline of the rectangles
@@ -67,15 +68,28 @@ void setup() {
 
 void resetVariations() {
   specialCells.clear();
-  // First, create and shuffle the special variations
+  
+  // Randomly choose between line and falling cells effect
+  showLine = random(1) < 0.5;
+  
+  // Create array of all possible special variations
+  ArrayList<Integer> allSpecialVariations = new ArrayList<Integer>();
+  allSpecialVariations.add(VARIATION_GOLD);
+  allSpecialVariations.add(VARIATION_SILVER);
+  allSpecialVariations.add(VARIATION_RANDOM);
+  allSpecialVariations.add(VARIATION_RANDOM_LOW);
+  allSpecialVariations.add(VARIATION_BLOOD);
+  allSpecialVariations.add(VARIATION_ACID);
+  
+  // Randomly decide how many variations to use (between 2 and 5)
+  int numVariations = (int)random(2, 6);
+  
+  // Randomly select variations
   ArrayList<Integer> specialVariations = new ArrayList<Integer>();
-  specialVariations.add(VARIATION_GOLD);
-  specialVariations.add(VARIATION_SILVER);
-  //specialVariations.add(VARIATION_RANDOM);
-  specialVariations.add(VARIATION_RANDOM_LOW);
-  specialVariations.add(VARIATION_BLOOD);
-  //specialVariations.add(VARIATION_ACID);
-  java.util.Collections.shuffle(specialVariations);
+  java.util.Collections.shuffle(allSpecialVariations);
+  for (int i = 0; i < numVariations; i++) {
+    specialVariations.add(allSpecialVariations.get(i));
+  }
   
   // Create array of all possible positions and shuffle them
   ArrayList<Integer> positions = new ArrayList<Integer>();
@@ -121,8 +135,12 @@ void drawRect(int col, int row) {
   
   pushMatrix();
   translate(cellX, cellY);
-  translate(0, row * col * 3);
-  rotate(row * col * 0.015);
+  
+  // Only apply falling effect if we're not showing the line
+  if (!showLine) {
+    translate(0, row * col * 3);
+    rotate(row * col * 0.015);
+  }
 
   pp.setPencilColor(CONTENT_COLOR);
   pp.setPencilSpread(1.5f);
@@ -309,7 +327,10 @@ void draw() {
   }
   popMatrix();
   
-  drawLine();
+  // Only draw the connecting line if showLine is true
+  if (showLine) {
+    drawLine();
+  }
   
   if (true) {
     // Save final frame to a temporary file
