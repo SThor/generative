@@ -25,14 +25,27 @@ final float LINE_SPREAD = 3.0f;
 final int NUM_LINE_POINTS = 5;
 final int NUM_PASSES = 5;
 
-int BACKGROUND_COLOR = color(350, 100); // Background color in HSB(360, 100, 100)
-int OUTLINE_COLOR = color(0, 0, 0, 70); // Color for the outline of the rectangles
-int CONTENT_COLOR = color(0, 0, 0, 30); // Color for the content inside the rectangles
+// Class to track special cell information
+class SpecialCell {
+  float centerX, centerY;
+  int variation;
+  
+  SpecialCell(float x, float y, int v) {
+    centerX = x;
+    centerY = y;
+    variation = v;
+  }
+}
 
 // Global variables
 String finalImagePath = null;
 PaperAndPencil pp;
 ArrayList<Integer> availableVariations;
+ArrayList<SpecialCell> specialCells;
+
+int BACKGROUND_COLOR = color(350, 100); // Background color in HSB(360, 100, 100)
+int OUTLINE_COLOR = color(0, 0, 0, 70); // Color for the outline of the rectangles
+int CONTENT_COLOR = color(0, 0, 0, 30); // Color for the content inside the rectangles
 
 void settings() {
   size(WIDTH, HEIGHT, P2D);
@@ -44,16 +57,16 @@ void settings() {
 
 void setup() {
   colorMode(HSB, 360, 100, 100, 100);
-  BACKGROUND_COLOR = color(350, 100); // Set the background color using HSB
-  //BACKGROUND_COLOR = Ok.HSL(350, 100, 100); // Set the background color using OkLab
-  OUTLINE_COLOR = color(0, 0, 0, 70); // Set the outline color using HSB
-  CONTENT_COLOR = color(0, 0, 0, 30); // Set the content color using HSB
+  BACKGROUND_COLOR = color(350, 100);
+  OUTLINE_COLOR = color(0, 0, 0, 70);
+  CONTENT_COLOR = color(0, 0, 0, 30);
   
-  // Initialize variations
+  specialCells = new ArrayList<SpecialCell>();
   resetVariations();
 }
 
 void resetVariations() {
+  specialCells.clear();
   // First, create and shuffle the special variations
   ArrayList<Integer> specialVariations = new ArrayList<Integer>();
   specialVariations.add(VARIATION_GOLD);
@@ -82,21 +95,34 @@ void resetVariations() {
   // Override random positions with special variations
   for (int i = 0; i < specialVariations.size(); i++) {
     int position = positions.get(i);
-    availableVariations.set(position, specialVariations.get(i));
+    int variation = specialVariations.get(i);
+    availableVariations.set(position, variation);
+    
+    // Calculate cell coordinates for this position
+    int row = position / NUM_CELLS;
+    int col = position % NUM_CELLS;
+    float cellX = col * (CELL_SIZE + SPACING);
+    float cellY = row * (CELL_SIZE + SPACING);
+    
+    // Calculate actual center position including margins
+    float centerX = MARGIN + cellX + CELL_SIZE/2;
+    float centerY = MARGIN + cellY + CELL_SIZE/2;
+    specialCells.add(new SpecialCell(centerX, centerY, variation));
   }
 }
 
 void drawRect(int col, int row) {
   float cellX = col * (CELL_SIZE + SPACING);
   float cellY = row * (CELL_SIZE + SPACING);
+  
+  // Get variation for this cell
+  int index = row * NUM_CELLS + col;
+  int variation = availableVariations.get(index);
+  
   pushMatrix();
   translate(cellX, cellY);
   translate(0, row * col * 3);
   rotate(row * col * 0.015);
-
-  // Get variation for this cell
-  int index = row * NUM_CELLS + col;
-  int variation = availableVariations.get(index);
 
   pp.setPencilColor(CONTENT_COLOR);
   pp.setPencilSpread(1.5f);
@@ -230,34 +256,29 @@ void drawLines(float x, float y) {
 }
 
 void drawLine() {
+  if (specialCells.size() == 0) return;
+  
   pp.setPencilSpread(LINE_SPREAD);
   
-  // Generate points for chained curves
-  float[] points = new float[NUM_LINE_POINTS * 2]; // Array to store x,y coordinates
+  // Sort special cells from left to right for a natural flow
+  java.util.Collections.sort(specialCells, new java.util.Comparator<SpecialCell>() {
+    public int compare(SpecialCell a, SpecialCell b) {
+      return Float.compare(a.centerX, b.centerX);
+    }
+  });
   
-  // Define bounds for the line's horizontal and vertical placement
-  float horizontalStartFactor = 0.1; // Starting horizontal position as a fraction of WIDTH
-  float horizontalEndFactor = 0.5;   // Ending horizontal position as a fraction of WIDTH
-  float horizontalRangeFactor = 0.3; // Range of horizontal movement as a fraction of WIDTH
-  float verticalStartFactor = 0.1;   // Starting vertical position as a fraction of HEIGHT
-  float verticalEndFactor = 0.9;     // Ending vertical position as a fraction of HEIGHT
-
-  // Initialize points
-  for (int i = 0; i < points.length; i += 2) {
-    float horizontalProgress = i / (float)(points.length - 2); // Progress along the line (0 to 1)
-    float xMin = WIDTH * (horizontalStartFactor + horizontalProgress * horizontalRangeFactor); // Minimum X coordinate
-    float xMax = WIDTH * (horizontalEndFactor + horizontalProgress * horizontalRangeFactor);   // Maximum X coordinate
-    float yMin = HEIGHT * verticalStartFactor; // Minimum Y coordinate
-    float yMax = HEIGHT * verticalEndFactor;   // Maximum Y coordinate
-
-    points[i] = random(xMin, xMax); // Random X coordinate within bounds
-    points[i + 1] = random(yMin, yMax); // Random Y coordinate within bounds
+  // Create points array from special cell centers
+  float[] points = new float[specialCells.size() * 2];
+  for (int i = 0; i < specialCells.size(); i++) {
+    SpecialCell cell = specialCells.get(i);
+    points[i*2] = cell.centerX;
+    points[i*2 + 1] = cell.centerY;
   }
   
   // Draw multiple passes for depth
   for (int pass = 0; pass < NUM_PASSES; pass++) {
     // Create slight color variation for each pass
-    float hue = random(200, 240); // Base blue color with variation
+    float hue = random(200, 240);
     float saturation = random(75, 85);
     float brightness = random(35, 45);
     pp.setPencilColor(color(hue, saturation, brightness, 80));
