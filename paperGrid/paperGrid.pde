@@ -278,6 +278,11 @@ void drawLine() {
   
   pp.setPencilSpread(LINE_SPREAD);
   
+  // Randomly select a base hue for this line
+  float baseHue = random(360);
+  float baseSaturation = random(60, 100);
+  float baseBrightness = random(40, 80);
+  
   // Sort special cells from left to right for a natural flow
   java.util.Collections.sort(specialCells, new java.util.Comparator<SpecialCell>() {
     public int compare(SpecialCell a, SpecialCell b) {
@@ -295,10 +300,10 @@ void drawLine() {
   
   // Draw multiple passes for depth
   for (int pass = 0; pass < NUM_PASSES; pass++) {
-    // Create slight color variation for each pass
-    float hue = random(200, 240);
-    float saturation = random(75, 85);
-    float brightness = random(35, 45);
+    // Create slight variations around the base color
+    float hue = baseHue + random(-20, 20);  // Vary hue slightly
+    float saturation = baseSaturation + random(-5, 5);  // Vary saturation
+    float brightness = baseBrightness + random(-5, 5);  // Vary brightness
     pp.setPencilColor(color(hue, saturation, brightness, 80));
     
     // Create point variations for natural look
