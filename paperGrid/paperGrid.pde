@@ -20,6 +20,11 @@ final int VARIATION_BLOOD = 5;
 final int VARIATION_ACID = 6;
 final int VARIATION_RANDOM_LOW = 7;
 
+// Line drawing configuration
+final float LINE_SPREAD = 3.0f;
+final int NUM_LINE_POINTS = 5;
+final int NUM_PASSES = 5;
+
 int BACKGROUND_COLOR = color(350, 100); // Background color in HSB(360, 100, 100)
 int OUTLINE_COLOR = color(0, 0, 0, 70); // Color for the outline of the rectangles
 int CONTENT_COLOR = color(0, 0, 0, 30); // Color for the content inside the rectangles
@@ -112,6 +117,7 @@ void drawRect(int col, int row) {
           drawLines(x, y);
           break;
         case VARIATION_RANDOM:
+          fill(pp.getPencilColor());
           pp.dot(x, y);
           if ((row + col) % 2 == 0) {
             drawBands(x, y);
@@ -121,6 +127,7 @@ void drawRect(int col, int row) {
           break;
         case VARIATION_RANDOM_LOW:
           if (random(5) < 1) {
+            fill(pp.getPencilColor());
             pp.dot(x, y);
           }
           if ((row + col) % 2 == 0) {
@@ -152,6 +159,7 @@ void drawGoldBands(float x, float y) {
   float hue = map(goldNoise, 0f, 1f, 40f, 60f);        // Vary between yellow-gold (45) and orange-gold (55)
   float brightness = map(goldNoise, 0f, 1f, 80f, 100f);  // Vary brightness 90-100 for metallic sheen
   pp.setPencilColor(color(hue, 100, brightness, 70));
+  fill(pp.getPencilColor());
 
   drawBands(x, y); // Draw the bands with the gold color
 }
@@ -161,6 +169,7 @@ void drawSilverBands(float x, float y) {
   // Use existing noise value to create metallic silver variations
   float brightness = map(silverNoise, 0f, 1f, 80f, 100f); // Vary brightness for metallic sheen
   pp.setPencilColor(color(240f, 4, brightness, 70)); // Slight blue hue and low saturation for silver
+  fill(pp.getPencilColor());
 
   drawBands(x, y); // Draw the bands with the silver color
 }
@@ -172,6 +181,7 @@ void drawBlood(float x, float y) {
   float saturation = map(bloodNoise, 0f, 1f, 80f, 100f); // High saturation for rich red
   float brightness = map(bloodNoise, 0f, 1f, 30f, 60f); // Lower brightness for dark red
   pp.setPencilColor(color(hue, saturation, brightness, 70)); // Dark red with high saturation
+  fill(pp.getPencilColor());
 
   drawBands(x, y); // Draw the bands with the blood color
   drawBands(x, y); // Draw the bands with the blood color
@@ -184,11 +194,13 @@ void drawAcid(float x, float y) {
   float hue = map(acidNoise, 0f, 1f, 0f, 360f); // Vary hue for blood color
   float saturation = map(acidNoise, 0f, 1f, 50f, 100f); // Vary saturation for blood effect
   pp.setPencilColor(color(hue, saturation, 100, 70)); // Bright red with high saturation
+  fill(pp.getPencilColor());
 
   drawBands(x, y); // Draw the bands with the blood color
 }
 
 void drawBands(float x, float y) {
+  fill(pp.getPencilColor());
   float noise = noise(x * NOISE_SCALE, y * NOISE_SCALE);
   int contourLevel = round(noise * 10); // Convert 0-1 to 0-10 and round
 
@@ -210,9 +222,55 @@ void drawLines(float x, float y) {
   // Draw a dot if we're on a contour line boundary
   if (currentLevel != rightLevel || currentLevel != downLevel) {
     pp.setPencilColor(color(0, 0, 0, 70));
+    fill(pp.getPencilColor());
     pp.dot(x, y);
     pp.dot(x, y);
     pp.dot(x, y);
+  }
+}
+
+void drawLine() {
+  pp.setPencilSpread(LINE_SPREAD);
+  
+  // Generate points for chained curves
+  float[] points = new float[NUM_LINE_POINTS * 2]; // Array to store x,y coordinates
+  
+  // Define bounds for the line's horizontal and vertical placement
+  float horizontalStartFactor = 0.1; // Starting horizontal position as a fraction of WIDTH
+  float horizontalEndFactor = 0.5;   // Ending horizontal position as a fraction of WIDTH
+  float horizontalRangeFactor = 0.3; // Range of horizontal movement as a fraction of WIDTH
+  float verticalStartFactor = 0.1;   // Starting vertical position as a fraction of HEIGHT
+  float verticalEndFactor = 0.9;     // Ending vertical position as a fraction of HEIGHT
+
+  // Initialize points
+  for (int i = 0; i < points.length; i += 2) {
+    float horizontalProgress = i / (float)(points.length - 2); // Progress along the line (0 to 1)
+    float xMin = WIDTH * (horizontalStartFactor + horizontalProgress * horizontalRangeFactor); // Minimum X coordinate
+    float xMax = WIDTH * (horizontalEndFactor + horizontalProgress * horizontalRangeFactor);   // Maximum X coordinate
+    float yMin = HEIGHT * verticalStartFactor; // Minimum Y coordinate
+    float yMax = HEIGHT * verticalEndFactor;   // Maximum Y coordinate
+
+    points[i] = random(xMin, xMax); // Random X coordinate within bounds
+    points[i + 1] = random(yMin, yMax); // Random Y coordinate within bounds
+  }
+  
+  // Draw multiple passes for depth
+  for (int pass = 0; pass < NUM_PASSES; pass++) {
+    // Create slight color variation for each pass
+    float hue = random(200, 240); // Base blue color with variation
+    float saturation = random(75, 85);
+    float brightness = random(35, 45);
+    pp.setPencilColor(color(hue, saturation, brightness, 80));
+    
+    // Create point variations for natural look
+    float[] offsetPoints = new float[points.length];
+    float offset = 3;
+    
+    for (int i = 0; i < points.length; i++) {
+      offsetPoints[i] = points[i] + random(-offset, offset);
+    }
+
+    pp.spline(offsetPoints, true, false);
   }
 }
 
@@ -229,6 +287,8 @@ void draw() {
     }
   }
   popMatrix();
+  
+  drawLine();
   
   if (true) {
     // Save final frame to a temporary file
