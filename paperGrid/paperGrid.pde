@@ -44,6 +44,7 @@ ArrayList<Integer> availableVariations;
 ArrayList<SpecialCell> specialCells;
 boolean showLine; // Flag to control which effect is shown
 PGraphics mask; // Mask for the Paper and Pencil library
+long seed = 0; // Seed for the random number generator
 
 int BACKGROUND_COLOR = color(350, 100); // Background color in HSB(360, 100, 100)
 int OUTLINE_COLOR = color(0, 0, 0, 70); // Color for the outline of the rectangles
@@ -58,6 +59,7 @@ void settings() {
 }
 
 void setup() {
+  seed();
   colorMode(HSB, 360, 100, 100, 100);
   BACKGROUND_COLOR = color(350, 100);
   OUTLINE_COLOR = color(0, 0, 0, 70);
@@ -353,6 +355,10 @@ void draw() {
 
   pp.useMask();
   drawLine();
+
+  fill(OUTLINE_COLOR);
+  textSize(6);
+  text(""+seed, 5, height-5);
   
   if (true) {
     // Save final frame to a temporary file
@@ -361,6 +367,13 @@ void draw() {
     noLoop();
     return;
   }
+}
+
+void seed() {
+  // Set a random seed for the noise function
+  seed = System.currentTimeMillis();
+  noiseSeed(seed);
+  randomSeed(seed);
 }
 
 void keyPressed() {
@@ -388,7 +401,7 @@ void saveImage() {
 }
 
 void resetSketch() {
-  noiseSeed(frameCount);
+  seed();
   frameCount = 0;
   finalImagePath = null;
   resetVariations();
