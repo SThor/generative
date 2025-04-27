@@ -43,6 +43,7 @@ PaperAndPencil pp;
 ArrayList<Integer> availableVariations;
 ArrayList<SpecialCell> specialCells;
 boolean showLine; // Flag to control which effect is shown
+PGraphics mask; // Mask for the Paper and Pencil library
 
 int BACKGROUND_COLOR = color(350, 100); // Background color in HSB(360, 100, 100)
 int OUTLINE_COLOR = color(0, 0, 0, 70); // Color for the outline of the rectangles
@@ -135,12 +136,13 @@ void drawRect(int col, int row) {
   
   pushMatrix();
   translate(cellX, cellY);
+  mask.pushMatrix();
+  mask.translate(cellX, cellY);
   
-  // Only apply falling effect if we're not showing the line
-  if (!showLine) {
-    translate(0, row * col * 3);
-    rotate(row * col * 0.015);
-  }
+  translate(0, row * col * 3);
+  rotate(row * col * 0.015);
+  mask.translate(0, row * col * 3);
+  mask.rotate(row * col * 0.015);
 
   pp.setPencilColor(CONTENT_COLOR);
   pp.setPencilSpread(1.5f);
@@ -194,7 +196,12 @@ void drawRect(int col, int row) {
   pp.setPencilColor(OUTLINE_COLOR);
   pp.rect(0, 0, CELL_SIZE, CELL_SIZE);
 
+  mask.fill(255);
+  mask.stroke(255, 128);
+  mask.rect(2, 2, CELL_SIZE-4, CELL_SIZE-4);
+
   popMatrix();
+  mask.popMatrix();
 }
 
 void drawGoldBands(float x, float y) {
@@ -283,30 +290,28 @@ void drawLine() {
   float baseSaturation = random(60, 100);
   float baseBrightness = random(40, 80);
   
-  // Sort special cells from left to right for a natural flow
+  // Sort special cells left to right
   java.util.Collections.sort(specialCells, new java.util.Comparator<SpecialCell>() {
     public int compare(SpecialCell a, SpecialCell b) {
       return Float.compare(a.centerX, b.centerX);
     }
   });
   
-  // Create points array from special cell centers
+  // Create points array
   float[] points = new float[specialCells.size() * 2];
   for (int i = 0; i < specialCells.size(); i++) {
     SpecialCell cell = specialCells.get(i);
     points[i*2] = cell.centerX;
     points[i*2 + 1] = cell.centerY;
   }
-  
-  // Draw multiple passes for depth
+    
+  // Draw multiple passes
   for (int pass = 0; pass < NUM_PASSES; pass++) {
-    // Create slight variations around the base color
-    float hue = baseHue + random(-20, 20);  // Vary hue slightly
-    float saturation = baseSaturation + random(-5, 5);  // Vary saturation
-    float brightness = baseBrightness + random(-5, 5);  // Vary brightness
+    float hue = baseHue + random(-20, 20);
+    float saturation = baseSaturation + random(-5, 5);
+    float brightness = baseBrightness + random(-5, 5);
     pp.setPencilColor(color(hue, saturation, brightness, 80));
     
-    // Create point variations for natural look
     float[] offsetPoints = new float[points.length];
     float offset = 3;
     
@@ -321,8 +326,12 @@ void drawLine() {
 void draw() {
   background(BACKGROUND_COLOR);
   pp.paper();
+  mask = pp.resetMask();
+
   pushMatrix();
   translate(MARGIN, MARGIN);
+  mask.pushMatrix();
+  mask.translate(MARGIN, MARGIN);
 
   // Draw a grid of rectangles
   for (int row = 0; row < NUM_CELLS; row++) {
@@ -331,11 +340,19 @@ void draw() {
     }
   }
   popMatrix();
+  mask.popMatrix();
   
-  // Only draw the connecting line if showLine is true
-  if (showLine) {
-    drawLine();
+  // Reverse the mask
+  mask.loadPixels();
+  for (int i = 0; i < mask.pixels.length; i++) {
+    int alpha = (mask.pixels[i] >> 24) & 0xFF;  // Extract alpha
+    alpha = 255 - alpha;  // Invert alpha (0->255, 255->0)
+    mask.pixels[i] = (alpha << 24) | (mask.pixels[i] & 0x00FFFFFF);  // Put alpha back
   }
+  mask.updatePixels();
+
+  pp.useMask();
+  drawLine();
   
   if (true) {
     // Save final frame to a temporary file
