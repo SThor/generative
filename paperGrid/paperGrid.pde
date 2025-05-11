@@ -49,6 +49,7 @@ ArrayList<SpecialCell> specialCells;
 boolean showLine; // Flag to control which effect is shown
 PGraphics mask; // Mask for the Paper and Pencil library
 long seed = 0; // Seed for the random number generator
+boolean debug = false; // Debug mode to simplify drawing
 
 int BACKGROUND_COLOR = color(350, 100); // Background color in HSB(360, 100, 100)
 int OUTLINE_COLOR = color(0, 0, 0, 70); // Color for the outline of the rectangles
@@ -267,6 +268,15 @@ void drawAcid(float x, float y) {
 
 void drawBands(float x, float y) {
   fill(pp.getPencilColor());
+  
+  if (debug) {
+    // In debug mode, just draw a simple dot
+    pp.dot(x, y);
+    pp.dot(x, y);
+    return;
+  }
+  
+  // Normal drawing mode
   float noise = noise(x * NOISE_SCALE, y * NOISE_SCALE);
   int contourLevel = round(noise * 10); // Convert 0-1 to 0-10 and round
 
@@ -406,6 +416,9 @@ void keyPressed() {
     saveImage();
   } else if (key == ENTER || key == '\n') {
     resetSketch();
+  } else if (key == 'd' || key == 'D') {
+    debug = !debug; // Toggle debug mode
+    loop(); // Force redraw with new debug setting
   }
 }
 
