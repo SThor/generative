@@ -90,8 +90,9 @@ void resetVariations() {
   allSpecialVariations.add(VARIATION_CROSSHATCH_LOW);
   allSpecialVariations.add(VARIATION_CROSSHATCH_HIGH);
   
-  // Randomly decide how many variations to use (between 2 and 5)
-  int numVariations = (int)random(2, 6);
+  // Use Gaussian distribution constrained between 2 and the number of special variations
+  int numVariations = (int)map(randomGaussian(), -2, 2, 2, allSpecialVariations.size()); // Map ±2 standard deviations to our range
+  numVariations = constrain(numVariations, 2, allSpecialVariations.size());
   
   // Randomly select variations
   ArrayList<Integer> specialVariations = new ArrayList<Integer>();
