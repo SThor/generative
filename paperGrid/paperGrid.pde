@@ -10,6 +10,8 @@ final int NUM_CELLS = 4; // Number of cells in each row and column
 final int CELL_SIZE = (WIDTH - 2 * MARGIN - (NUM_CELLS - 1) * SPACING) / NUM_CELLS; // Size of each cell
 final float NOISE_SCALE = 0.008; // Scale for the noise function
 final float GOLD_NOISE_SCALE = 0.02; // Scale for the gold noise function
+final float CROSSHATCH_SPACING_LOW = 5; // Spacing between crosshatch lines
+final float CROSSHATCH_SPACING_HIGH = 15; // Spacing between crosshatch lines 
 
 final int VARIATION_GOLD = 0;
 final int VARIATION_SILVER = 1;
@@ -19,6 +21,8 @@ final int VARIATION_RANDOM = 4;
 final int VARIATION_BLOOD = 5;
 final int VARIATION_ACID = 6;
 final int VARIATION_RANDOM_LOW = 7;
+final int VARIATION_CROSSHATCH_LOW = 8;
+final int VARIATION_CROSSHATCH_HIGH = 9;
 
 // Line drawing configuration
 final float LINE_SPREAD = 3.0f;
@@ -83,6 +87,8 @@ void resetVariations() {
   allSpecialVariations.add(VARIATION_RANDOM_LOW);
   allSpecialVariations.add(VARIATION_BLOOD);
   allSpecialVariations.add(VARIATION_ACID);
+  allSpecialVariations.add(VARIATION_CROSSHATCH_LOW);
+  allSpecialVariations.add(VARIATION_CROSSHATCH_HIGH);
   
   // Randomly decide how many variations to use (between 2 and 5)
   int numVariations = (int)random(2, 6);
@@ -190,6 +196,12 @@ void drawRect(int col, int row) {
         case VARIATION_ACID:
           drawAcid(x, y);
           break;
+        case VARIATION_CROSSHATCH_LOW:
+          drawCrosshatch(x, y, CROSSHATCH_SPACING_LOW);
+          break;
+        case VARIATION_CROSSHATCH_HIGH:
+          drawCrosshatch(x, y, CROSSHATCH_SPACING_HIGH);
+          break;
       }
     }
   }
@@ -279,6 +291,18 @@ void drawLines(float x, float y) {
     pp.dot(x, y);
     pp.dot(x, y);
     pp.dot(x, y);
+  }
+}
+
+void drawCrosshatch(float x, float y, float spacing) {
+  // diagonal lines in one direction
+  if ((x + y) % spacing == 0) {
+    drawBands(x, y);
+  }
+  
+  // diagonal lines in other direction
+  if ((x - y) % spacing == 0) {
+    drawBands(x, y);
   }
 }
 
