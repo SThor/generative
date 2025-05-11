@@ -11,7 +11,8 @@ final int CELL_SIZE = (WIDTH - 2 * MARGIN - (NUM_CELLS - 1) * SPACING) / NUM_CEL
 final float NOISE_SCALE = 0.008; // Scale for the noise function
 final float GOLD_NOISE_SCALE = 0.02; // Scale for the gold noise function
 final float CROSSHATCH_SPACING_LOW = 5; // Spacing between crosshatch lines
-final float CROSSHATCH_SPACING_HIGH = 15; // Spacing between crosshatch lines 
+final float CROSSHATCH_SPACING_HIGH = 15; // Spacing between crosshatch lines
+final float SPIRAL_ARMS = 15; // Number of arms in the spiral
 
 final int VARIATION_GOLD = 0;
 final int VARIATION_SILVER = 1;
@@ -23,6 +24,8 @@ final int VARIATION_ACID = 6;
 final int VARIATION_RANDOM_LOW = 7;
 final int VARIATION_CROSSHATCH_LOW = 8;
 final int VARIATION_CROSSHATCH_HIGH = 9;
+final int VARIATION_RIPPLE = 10;
+final int VARIATION_SPIRAL = 11;
 
 // Line drawing configuration
 final float LINE_SPREAD = 3.0f;
@@ -55,6 +58,8 @@ int BACKGROUND_COLOR = color(350, 100); // Background color in HSB(360, 100, 100
 int OUTLINE_COLOR = color(0, 0, 0, 70); // Color for the outline of the rectangles
 int CONTENT_COLOR = color(0, 0, 0, 30); // Color for the content inside the rectangles
 
+float RIPPLE_SCALE = 1.0;
+
 void settings() {
   size(WIDTH, HEIGHT, P2D);
   smooth(8);
@@ -75,6 +80,8 @@ void setup() {
 }
 
 void resetVariations() {
+  RIPPLE_SCALE = (int)random(5, 20);
+  
   specialCells.clear();
   
   // Randomly choose between line and falling cells effect
@@ -90,6 +97,8 @@ void resetVariations() {
   allSpecialVariations.add(VARIATION_ACID);
   allSpecialVariations.add(VARIATION_CROSSHATCH_LOW);
   allSpecialVariations.add(VARIATION_CROSSHATCH_HIGH);
+  allSpecialVariations.add(VARIATION_RIPPLE);
+  allSpecialVariations.add(VARIATION_SPIRAL);
   
   // Use Gaussian distribution constrained between 2 and the number of special variations
   int numVariations = (int)map(randomGaussian(), -2, 2, 2, allSpecialVariations.size()); // Map ±2 standard deviations to our range
@@ -204,6 +213,12 @@ void drawRect(int col, int row) {
         case VARIATION_CROSSHATCH_HIGH:
           drawCrosshatch(x, y, CROSSHATCH_SPACING_HIGH);
           break;
+        case VARIATION_RIPPLE:
+          drawRipple(x, y);
+          break;
+        case VARIATION_SPIRAL:
+          drawSpiral(x, y);
+          break;
       }
     }
   }
@@ -317,6 +332,36 @@ void drawCrosshatch(float x, float y, float spacing) {
   }
 }
 
+void drawRipple(float x, float y) {
+  float centerX = CELL_SIZE/2;
+  float centerY = CELL_SIZE/2;
+  float dist = dist(x, y, centerX, centerY);
+  float wave = sin(dist * RIPPLE_SCALE);
+  
+  if (wave > 0) {
+    drawBands(x, y);
+  }
+}
+
+void drawSpiral(float x, float y) {
+  float centerX = CELL_SIZE/2;
+  float centerY = CELL_SIZE/2;
+  float dx = x - centerX;
+  float dy = y - centerY;
+  float angle = atan2(dy, dx);
+  
+  // Normalize angle to 0-TWO_PI range
+  if (angle < 0) angle += TWO_PI;
+  
+  float dist = dist(x, y, centerX, centerY);
+  
+  float spiral = angle * SPIRAL_ARMS - dist;
+  
+  if (sin(spiral) < 0) { // Check if the spiral value is below the threshold
+    drawBands(x, y);
+  }
+}
+
 void drawLine() {
   if (specialCells.size() == 0) return;
   
@@ -393,7 +438,8 @@ void draw() {
 
   fill(OUTLINE_COLOR);
   textSize(6);
-  text(""+seed, 5, height-5);
+  text("" + seed, 5, height - 5);
+  text("" + RIPPLE_SCALE, width - 15, height - 5);
   
   if (true) {
     // Save final frame to a temporary file
