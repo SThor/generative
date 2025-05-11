@@ -26,6 +26,7 @@ final int VARIATION_CROSSHATCH_LOW = 8;
 final int VARIATION_CROSSHATCH_HIGH = 9;
 final int VARIATION_RIPPLE = 10;
 final int VARIATION_SPIRAL = 11;
+final int VARIATION_ACID_RIPPLE = 12;
 
 // Line drawing configuration
 final float LINE_SPREAD = 3.0f;
@@ -59,6 +60,7 @@ int OUTLINE_COLOR = color(0, 0, 0, 70); // Color for the outline of the rectangl
 int CONTENT_COLOR = color(0, 0, 0, 30); // Color for the content inside the rectangles
 
 float RIPPLE_SCALE = 1.0;
+float ACID_RIPPLE_SCALE = 1.0;
 
 void settings() {
   size(WIDTH, HEIGHT, P2D);
@@ -81,12 +83,13 @@ void setup() {
 
 void resetVariations() {
   RIPPLE_SCALE = (int)random(5, 20);
-  
+  ACID_RIPPLE_SCALE = (int)random(5, 20);
+
   specialCells.clear();
-  
+
   // Randomly choose between line and falling cells effect
   showLine = random(1) < 0.5;
-  
+
   // Create array of all possible special variations
   ArrayList<Integer> allSpecialVariations = new ArrayList<Integer>();
   allSpecialVariations.add(VARIATION_GOLD);
@@ -99,25 +102,35 @@ void resetVariations() {
   allSpecialVariations.add(VARIATION_CROSSHATCH_HIGH);
   allSpecialVariations.add(VARIATION_RIPPLE);
   allSpecialVariations.add(VARIATION_SPIRAL);
-  
+  allSpecialVariations.add(VARIATION_ACID_RIPPLE);
+
+  // Ensure acid and acid ripple variations are less likely to appear together
+  if (random(1) < 0.8) { // 80% chance to remove one of them
+    if (random(1) < 0.5) {
+      allSpecialVariations.remove((Integer) VARIATION_ACID);
+    } else {
+      allSpecialVariations.remove((Integer) VARIATION_ACID_RIPPLE);
+    }
+  }
+
   // Use Gaussian distribution constrained between 2 and the number of special variations
   int numVariations = (int)map(randomGaussian(), -2, 2, 2, allSpecialVariations.size()); // Map ±2 standard deviations to our range
   numVariations = constrain(numVariations, 2, allSpecialVariations.size());
-  
+
   // Randomly select variations
   ArrayList<Integer> specialVariations = new ArrayList<Integer>();
   java.util.Collections.shuffle(allSpecialVariations);
   for (int i = 0; i < numVariations; i++) {
     specialVariations.add(allSpecialVariations.get(i));
   }
-  
+
   // Create array of all possible positions and shuffle them
   ArrayList<Integer> positions = new ArrayList<Integer>();
   for (int i = 0; i < NUM_CELLS * NUM_CELLS; i++) {
     positions.add(i);
   }
   java.util.Collections.shuffle(positions);
-  
+
   // Initialize grid with checkerboard pattern
   availableVariations = new ArrayList<Integer>();
   for (int row = 0; row < NUM_CELLS; row++) {
@@ -125,19 +138,19 @@ void resetVariations() {
       availableVariations.add(((row + col) % 2 == 0) ? VARIATION_BANDS : VARIATION_LINES);
     }
   }
-  
+
   // Override random positions with special variations
   for (int i = 0; i < specialVariations.size(); i++) {
     int position = positions.get(i);
     int variation = specialVariations.get(i);
     availableVariations.set(position, variation);
-    
+
     // Calculate cell coordinates for this position
     int row = position / NUM_CELLS;
     int col = position % NUM_CELLS;
     float cellX = col * (CELL_SIZE + SPACING);
     float cellY = row * (CELL_SIZE + SPACING);
-    
+
     // Calculate actual center position including margins
     float centerX = MARGIN + cellX + CELL_SIZE/2;
     float centerY = MARGIN + cellY + CELL_SIZE/2;
@@ -219,6 +232,9 @@ void drawRect(int col, int row) {
         case VARIATION_SPIRAL:
           drawSpiral(x, y);
           break;
+        case VARIATION_ACID_RIPPLE:
+          drawAcidRipple(x, y);
+          break;
       }
     }
   }
@@ -279,6 +295,16 @@ void drawAcid(float x, float y) {
   fill(pp.getPencilColor());
 
   drawBands(x, y); // Draw the bands with the blood color
+}
+
+void drawAcidRipple(float x, float y) {
+  float centerX = CELL_SIZE / 2;
+  float centerY = CELL_SIZE / 2;
+  float dist = dist(x, y, centerX, centerY);
+  float wave = sin(dist * ACID_RIPPLE_SCALE);
+  if (wave > 0) {
+    drawAcid(x, y);
+  }
 }
 
 void drawBands(float x, float y) {
@@ -440,6 +466,7 @@ void draw() {
   textSize(6);
   text("" + seed, 5, height - 5);
   text("" + RIPPLE_SCALE, width - 15, height - 5);
+  text("" + ACID_RIPPLE_SCALE, width - 15, height - 15);
   
   if (true) {
     // Save final frame to a temporary file
