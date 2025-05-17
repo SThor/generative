@@ -22,7 +22,7 @@ void setRandomSeed() {
 }
 
 void setup() {
-  colorMode(RGB, 255, 255, 255, 100);
+  colorMode(HSB, 360, 100, 100, 100);
   setRandomSeed();
   
   // Create our buffers with proper initialization
@@ -31,11 +31,12 @@ void setup() {
   
   // Initialize both buffers with background
   sourceBuffer.beginDraw();
-  sourceBuffer.colorMode(RGB, 255, 255, 255, 100);
+  sourceBuffer.colorMode(HSB, 360, 100, 100, 100);
   sourceBuffer.background(0);
   sourceBuffer.endDraw();
   
   displayBuffer.beginDraw();
+  displayBuffer.colorMode(HSB, 360, 100, 100, 100);
   displayBuffer.background(0);
   displayBuffer.endDraw();
   
@@ -43,14 +44,14 @@ void setup() {
   blurShader = loadShader("blur.glsl");
   blurShader.set("resolution", float(WIDTH), float(HEIGHT));
   blurShader.set("kernelSize", 7); // Less prominent blur
-  blurShader.set("sigmaFactor", 0.35); // Default softness, now adjustable
+  blurShader.set("sigmaFactor", 0.1); // Default softness, now adjustable
   
   // Draw initial content directly to display buffer
-  displayBuffer.beginDraw();
-  displayBuffer.fill(255, 100, 100);
-  displayBuffer.noStroke();
-  displayBuffer.ellipse(width/2, height/2, 400, 400);
-  displayBuffer.endDraw();
+  // displayBuffer.beginDraw();
+  // displayBuffer.fill(255, 100, 100);
+  // displayBuffer.noStroke();
+  // displayBuffer.ellipse(width/2, height/2, 400, 400);
+  // displayBuffer.endDraw();
   
   // Clear the main canvas
   background(0);
@@ -61,11 +62,22 @@ void draw() {
   image(displayBuffer, 0, 0);
 
   displayBuffer.beginDraw();
-  
-  // Use built-in blur filter
-  // displayBuffer.filter(BLUR, BLUR_AMOUNT);  
-  
-  // Alternative: Use custom shader
+  float padding = 60; // Padding from all sides
+  float rectWidth = width / 4;
+  float rectHeight = height / 4;
+  float rectY = padding + frameCount; // Start at padding, move down
+  float hue = (frameCount * 0.1) % 360; // Animate hue over time
+  // Oscillate horizontally with sin, amplitude decreases as it moves down
+  float progress = (rectY - padding) / (height - 2 * padding - rectHeight); // 0 at top, 1 at bottom
+  float amp = lerp((width - 2 * padding - rectWidth) / 2, 0, progress); // amplitude shrinks to 0
+  float osc = sin(frameCount * 0.03);
+  float centerX = width / 2 + osc * amp;
+  displayBuffer.pushMatrix();
+  displayBuffer.translate(centerX, rectY + rectHeight / 2);
+  displayBuffer.fill(hue, 80, 100, 100);
+  displayBuffer.noStroke();
+  displayBuffer.rect(-rectWidth / 2, -rectHeight / 2, rectWidth, rectHeight, 20);
+  displayBuffer.popMatrix();
   displayBuffer.filter(blurShader);
   displayBuffer.endDraw();
 
@@ -77,7 +89,7 @@ void draw() {
   text("Frame: " + frameCount, 10, 20);
   text("Seed: " + seed, width-240, 20);
   
-  if (false) { // Replace with your condition to stop drawing
+  if (rectY + rectHeight > height - padding) { // Stop when bottom of rect reaches bottom padding
     // Save final frame to a temporary file
     finalImagePath = "final_frame_temp.png";
     save(finalImagePath);
