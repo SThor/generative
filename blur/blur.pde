@@ -1,22 +1,29 @@
 // Configuration parameters
 final int WIDTH = 1000;
 final int HEIGHT = 1000;
-final float BLUR_AMOUNT = 1.0; // Adjust for stronger/weaker blur effect
 
 // Graphics objects
 PGraphics sourceBuffer;  // Buffer to hold original content
 PGraphics displayBuffer; // Buffer that gets progressively blurred
-PShader blurShader;      // Optional custom shader
+PShader blurShader;      // Single circular blur shader
 
 // Global variables
 String finalImagePath = null;
+long seed = 0; // Seed for reproducibility
 
 void settings() {
   size(WIDTH, HEIGHT, P2D);
 }
 
+void setRandomSeed() {
+  seed = System.currentTimeMillis();
+  randomSeed(seed);
+  noiseSeed(seed);
+}
+
 void setup() {
   colorMode(RGB, 255, 255, 255, 100);
+  setRandomSeed();
   
   // Create our buffers with proper initialization
   sourceBuffer = createGraphics(WIDTH, HEIGHT, P2D);
@@ -32,10 +39,11 @@ void setup() {
   displayBuffer.background(0);
   displayBuffer.endDraw();
   
-  // Optional: Load and configure blur shader
+  // Load and configure circular blur shader
   blurShader = loadShader("blur.glsl");
   blurShader.set("resolution", float(WIDTH), float(HEIGHT));
-  blurShader.set("kernelSize", 7);
+  blurShader.set("kernelSize", 7); // Less prominent blur
+  blurShader.set("sigmaFactor", 0.35); // Default softness, now adjustable
   
   // Draw initial content directly to display buffer
   displayBuffer.beginDraw();
@@ -51,8 +59,7 @@ void setup() {
 void draw() {
   // Display the current state of our buffer
   image(displayBuffer, 0, 0);
-  
-  // Apply blur to the display buffer
+
   displayBuffer.beginDraw();
   
   // Use built-in blur filter
@@ -60,14 +67,15 @@ void draw() {
   
   // Alternative: Use custom shader
   displayBuffer.filter(blurShader);
-  
   displayBuffer.endDraw();
-  
+
   // Add frame counter overlay
   fill(0);
   rect(0, 0, 200, 20);
+  rect(width-250, 0, 250, 20); // For seed display
   fill(255);
   text("Frame: " + frameCount, 10, 20);
+  text("Seed: " + seed, width-240, 20);
   
   if (false) { // Replace with your condition to stop drawing
     // Save final frame to a temporary file
@@ -108,6 +116,7 @@ void saveImage() {
 }
 
 void resetSketch() {
+  setRandomSeed();
   // Reset to a blank display buffer
   displayBuffer.beginDraw();
   displayBuffer.background(0);
