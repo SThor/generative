@@ -2,14 +2,25 @@
 final int WIDTH = 1000;
 final int HEIGHT = 1000;
 
-// Graphics objects
-PGraphics sourceBuffer;  // Buffer to hold original content
-PGraphics displayBuffer; // Buffer that gets progressively blurred
-PShader blurShader;      // Single circular blur shader
+// Animation and layout constants
+final float PADDING = 100;
+final float RECT_WIDTH_RATIO = 0.25;
+final float RECT_HEIGHT_RATIO = 0.25;
+final float RECT_CORNER_RADIUS = 20;
+final float HUE_SPEED = 0.1;
+final float OSCILLATION_SPEED = 0.03;
+final int OVERLAY_LEFT_WIDTH = 200;
+final int OVERLAY_TOP_HEIGHT = 20;
+final int OVERLAY_RIGHT_WIDTH = 250;
+final int BLUR_KERNEL_SIZE = 7;
+final float BLUR_SIGMA_FACTOR = 0.1;
 
-// Global variables
+PGraphics displayBuffer; // Buffer that gets updated and displayed
+PShader blurShader; // Circular blur shader
+
 String finalImagePath = null;
-long seed = 0; // Seed for reproducibility
+long seed = 0;
+color backgroundColor = color(255, 255, 255);
 
 void settings() {
   size(WIDTH, HEIGHT, P2D);
@@ -23,74 +34,54 @@ void setRandomSeed() {
 
 void setup() {
   colorMode(HSB, 360, 100, 100, 100);
+  backgroundColor = color(360, 0, 100, 100);
   setRandomSeed();
-  
-  // Create our buffers with proper initialization
-  sourceBuffer = createGraphics(WIDTH, HEIGHT, P2D);
   displayBuffer = createGraphics(WIDTH, HEIGHT, P2D);
-  
-  // Initialize both buffers with background
-  sourceBuffer.beginDraw();
-  sourceBuffer.colorMode(HSB, 360, 100, 100, 100);
-  sourceBuffer.background(0);
-  sourceBuffer.endDraw();
-  
+  displayBuffer.smooth(8);
+
   displayBuffer.beginDraw();
   displayBuffer.colorMode(HSB, 360, 100, 100, 100);
-  displayBuffer.background(0);
+  displayBuffer.background(backgroundColor);
   displayBuffer.endDraw();
-  
-  // Load and configure circular blur shader
+
   blurShader = loadShader("blur.glsl");
   blurShader.set("resolution", float(WIDTH), float(HEIGHT));
-  blurShader.set("kernelSize", 7); // Less prominent blur
-  blurShader.set("sigmaFactor", 0.1); // Default softness, now adjustable
-  
-  // Draw initial content directly to display buffer
-  // displayBuffer.beginDraw();
-  // displayBuffer.fill(255, 100, 100);
-  // displayBuffer.noStroke();
-  // displayBuffer.ellipse(width/2, height/2, 400, 400);
-  // displayBuffer.endDraw();
-  
-  // Clear the main canvas
-  background(0);
+  blurShader.set("kernelSize", BLUR_KERNEL_SIZE);
+  blurShader.set("sigmaFactor", BLUR_SIGMA_FACTOR);
 }
 
 void draw() {
-  // Display the current state of our buffer
   image(displayBuffer, 0, 0);
 
   displayBuffer.beginDraw();
-  float padding = 60; // Padding from all sides
-  float rectWidth = width / 4;
-  float rectHeight = height / 4;
-  float rectY = padding + frameCount; // Start at padding, move down
-  float hue = (frameCount * 0.1) % 360; // Animate hue over time
-  // Oscillate horizontally with sin, amplitude decreases as it moves down
-  float progress = (rectY - padding) / (height - 2 * padding - rectHeight); // 0 at top, 1 at bottom
-  float amp = lerp((width - 2 * padding - rectWidth) / 2, 0, progress); // amplitude shrinks to 0
-  float osc = sin(frameCount * 0.03);
+  float rectWidth = width * RECT_WIDTH_RATIO;
+  float rectHeight = height * RECT_HEIGHT_RATIO;
+  float rectY = PADDING + frameCount; // Start from PADDING and move downwards
+  float hue = (frameCount * HUE_SPEED) % 360;
+  float progress = (rectY - PADDING) / (height - 2 * PADDING - rectHeight);
+  float amp = lerp((width - 2 * PADDING - rectWidth) / 2, 0, progress);
+  float osc = sin(frameCount * OSCILLATION_SPEED);
   float centerX = width / 2 + osc * amp;
   displayBuffer.pushMatrix();
   displayBuffer.translate(centerX, rectY + rectHeight / 2);
-  displayBuffer.fill(hue, 80, 100, 100);
-  displayBuffer.noStroke();
-  displayBuffer.rect(-rectWidth / 2, -rectHeight / 2, rectWidth, rectHeight, 20);
+  displayBuffer.fill(hue, 80, 100);
+  displayBuffer.stroke(hue, 80, 100);
+  displayBuffer.rect(-rectWidth / 2, -rectHeight / 2, rectWidth, rectHeight, RECT_CORNER_RADIUS);
   displayBuffer.popMatrix();
-  displayBuffer.filter(blurShader);
+  if (frameCount % 2 == 0) {
+    displayBuffer.filter(blurShader);
+  }
   displayBuffer.endDraw();
 
-  // Add frame counter overlay
+  // Overlay: frame and seed info
   fill(0);
-  rect(0, 0, 200, 20);
-  rect(width-250, 0, 250, 20); // For seed display
+  rect(0, 0, OVERLAY_LEFT_WIDTH, OVERLAY_TOP_HEIGHT);
+  rect(width-OVERLAY_RIGHT_WIDTH, 0, OVERLAY_RIGHT_WIDTH, OVERLAY_TOP_HEIGHT);
   fill(255);
   text("Frame: " + frameCount, 10, 20);
-  text("Seed: " + seed, width-240, 20);
-  
-  if (rectY + rectHeight > height - padding) { // Stop when bottom of rect reaches bottom padding
-    // Save final frame to a temporary file
+  text("Seed: " + seed, width-OVERLAY_RIGHT_WIDTH+10, 20);
+
+  if (rectY + rectHeight > height - PADDING) {
     finalImagePath = "final_frame_temp.png";
     save(finalImagePath);
     noLoop();
@@ -104,9 +95,8 @@ void keyPressed() {
   } else if (key == ENTER || key == '\n') {
     resetSketch();
   } else if (key == 'r' || key == 'R') {
-    // Reset to a blank canvas
     displayBuffer.beginDraw();
-    displayBuffer.background(0);
+    displayBuffer.background(backgroundColor);
     displayBuffer.endDraw();
   }
 }
@@ -114,7 +104,6 @@ void keyPressed() {
 void saveImage() {
   String filename = year() + "-" + month() + "-" + day() + "-" + hour() + "-" + minute() + "-" + second() + ".png";
   if (finalImagePath != null) {
-    // Copy the temporary file to the new filename
     File source = new File(sketchPath(finalImagePath));
     File dest = new File(sketchPath(filename));
     try {
@@ -129,28 +118,7 @@ void saveImage() {
 
 void resetSketch() {
   setRandomSeed();
-  // Reset to a blank display buffer
-  displayBuffer.beginDraw();
-  displayBuffer.background(0);
-  
-  // Redraw initial circle
-  displayBuffer.fill(255, 100, 100);
-  displayBuffer.noStroke();
-  displayBuffer.ellipse(width/2, height/2, 400, 400);
-  displayBuffer.endDraw();
-  
-  // Reset counters and flags
   frameCount = 0;
   finalImagePath = null;
   loop();
-}
-
-// Add new content on mouse click without resetting blur
-void mousePressed() {
-  // Draw directly to display buffer (don't use the source buffer)
-  displayBuffer.beginDraw();
-  displayBuffer.fill(random(100, 255), random(100, 255), random(100, 255));
-  displayBuffer.noStroke();
-  displayBuffer.ellipse(mouseX, mouseY, 100, 100);
-  displayBuffer.endDraw();
 }
