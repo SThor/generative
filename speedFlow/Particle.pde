@@ -5,6 +5,8 @@ final color PARTICLE_COLOR_FAST = color(255, 0, 0);   // rouge
 final float PARTICLE_VELOCITY_MIN = 0.0;
 final float PARTICLE_VELOCITY_MAX = 4.0; // vitesse max approx pour le mapping
 final float PARTICLE_RADIUS = 1.5;
+final float PARTICLE_ACCELERATION = 0.04; // force du flow-field appliquée à chaque update (diminuée)
+final float PARTICLE_VELOCITY_CAP = 2*PARTICLE_RADIUS; // vitesse maximale autorisée pour une particule
 
 class Particle {
   PVector pos, prevPos;
@@ -16,17 +18,34 @@ class Particle {
     col = color(255);
   }
 
-  void update() {
+  // La fonction getFlowFieldDirection doit retourner un PVector direction normalisé à la position donnée
+  void update(PVector flowDirection) {
     // Verlet integration: newPos = pos + (pos - prevPos) + acceleration
     PVector velocity = PVector.sub(pos, prevPos);
+    velocity.add(PVector.mult(flowDirection, PARTICLE_ACCELERATION));
+    // Cap sur la vitesse maximale
+    if (velocity.mag() > PARTICLE_VELOCITY_CAP) {
+      velocity.setMag(PARTICLE_VELOCITY_CAP);
+    }
     prevPos.set(pos);
-    // Pour l'instant, pas d'accélération (flow-field plus tard)
     pos.add(velocity);
-    // Bords en torus (wrap)
-    if (pos.x < 0) pos.x += WIDTH;
-    if (pos.x >= WIDTH) pos.x -= WIDTH;
-    if (pos.y < 0) pos.y += HEIGHT;
-    if (pos.y >= HEIGHT) pos.y -= HEIGHT;
+    // Bords en torus (wrap) + correction de prevPos pour éviter les artefacts
+    if (pos.x < 0) {
+      pos.x += WIDTH;
+      prevPos.x += WIDTH;
+    }
+    if (pos.x >= WIDTH) {
+      pos.x -= WIDTH;
+      prevPos.x -= WIDTH;
+    }
+    if (pos.y < 0) {
+      pos.y += HEIGHT;
+      prevPos.y += HEIGHT;
+    }
+    if (pos.y >= HEIGHT) {
+      pos.y -= HEIGHT;
+      prevPos.y -= HEIGHT;
+    }
   }
 
   void display() {
@@ -41,6 +60,6 @@ class Particle {
     }
     stroke(interpolatedColor);
     strokeWeight(PARTICLE_RADIUS * 2);
-    point(pos.x, pos.y);
+    line(prevPos.x, prevPos.y, pos.x, pos.y); // Remplace point() par une ligne entre prevPos et pos
   }
 }

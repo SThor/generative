@@ -1,7 +1,7 @@
 // --- Configuration ---
 final int WIDTH = 1000;
 final int HEIGHT = 1000;
-final int FLOW_GRID_SIZE = 20; // Nombre de cellules sur un axe
+final int FLOW_GRID_SIZE = 30; // Nombre de cellules sur un axe
 final float FLOW_NOISE_SCALE = 0.15; // Echelle du bruit pour le flow field
 final float FLOW_VECTOR_LEN = 0.4; // Longueur relative du vecteur (par rapport à la cellule)
 final float FLOW_ARROW_SIZE = 4; // Taille de la flèche
@@ -92,9 +92,11 @@ void drawFlowField() {
 // --- Draw loop ---
 void draw() {
   // Affichage des particules
-  for (Particle p : particles) {
-    p.update();
-    p.display();
+  for (Particle particle : particles) {
+    // Récupérer la direction du flow-field à la position de la particule (normalisé)
+    PVector flowDirection = getFlowFieldDirectionAt(particle.pos.x, particle.pos.y);
+    particle.update(flowDirection);
+    particle.display();
   }
   // Affichage de la seed
   fill(255, 180);
@@ -105,13 +107,23 @@ void draw() {
   if (debug) drawFlowField();
   // (Autres affichages éventuels...)
 
-    if (false) { // Replace with your condition to stop drawing
+  if (false) { // Replace with your condition to stop drawing
     // Save final frame to a temporary file
     finalImagePath = "final_frame_temp.png";
     save(finalImagePath);
     noLoop();
     return;
   }
+}
+
+// Retourne la direction du flow-field (normalisée) à une position flottante (x, y)
+PVector getFlowFieldDirectionAt(float x, float y) {
+  float cellW = float(WIDTH) / FLOW_GRID_SIZE;
+  float cellH = float(HEIGHT) / FLOW_GRID_SIZE;
+  int gx = int(constrain(x / cellW, 0, FLOW_GRID_SIZE - 1));
+  int gy = int(constrain(y / cellH, 0, FLOW_GRID_SIZE - 1));
+  float angle = flowFieldAngle(gx, gy);
+  return new PVector(cos(angle), sin(angle)); // Normalisé
 }
 
 // --- Events ---
