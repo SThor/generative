@@ -45,7 +45,7 @@ void initParticles() {
 }
 
 void clearAndRestartParticles() {
-  background(0);
+  background(255);
   randomSeed(flowSeed);
   noiseSeed(flowSeed);
   initParticles();
@@ -138,10 +138,10 @@ void keyPressed() {
     clearAndRestartParticles();
   } else if (key == 'l' || key == 'L') {
     lifespanActive = !lifespanActive;
-  } else if (key == 'o' || key == 'O') {
-    Particle.useOpacity = !Particle.useOpacity;
-  } else if (key == 'h' || key == 'H') {
-    Particle.useThickness = !Particle.useThickness;
+  // } else if (key == 'o' || key == 'O') {
+  //   Particle.useOpacity = !Particle.useOpacity;
+  // } else if (key == 'h' || key == 'H') {
+  //   Particle.useThickness = !Particle.useThickness;
   }
 }
 

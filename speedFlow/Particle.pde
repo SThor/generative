@@ -1,19 +1,19 @@
 // --- Constantes liées aux particules ---
-final color PARTICLE_COLOR_SLOW = color(120, 60, 255); // violet (bleu-violet saturé)
-final color PARTICLE_COLOR_MID = color(60, 255, 120);  // vert vif
-final color PARTICLE_COLOR_FAST = color(255, 80, 0);   // orange-rouge vif
+final color PARTICLE_COLOR_SLOW = color(255, 240, 150);  // jaune pastel
+final color PARTICLE_COLOR_MID = color(30, 220, 140);   // vert fluo marin
+final color PARTICLE_COLOR_FAST = color(10, 60, 120);   // bleu marin profond
 final float PARTICLE_VELOCITY_MIN = 0.0;
 final float PARTICLE_VELOCITY_MAX = 4.0; // vitesse max approx pour le mapping
 final float PARTICLE_RADIUS = 1.5;
 final float PARTICLE_ACCELERATION = 0.04; // force du flow-field appliquée à chaque update (diminuée)
 final float PARTICLE_VELOCITY_CAP = 2*PARTICLE_RADIUS; // vitesse maximale autorisée pour une particule
 final float PARTICLE_FRICTION = 0.01; // coefficient de frottement (réduction de la vitesse par frame)
-final int PARTICLE_LIFESPAN_MIN = 50; // durée de vie minimale (en frames)
-final int PARTICLE_LIFESPAN_MAX = 150; // durée de vie maximale (en frames)
+final int PARTICLE_LIFESPAN_MIN = 10; // durée de vie minimale (en frames)
+final int PARTICLE_LIFESPAN_MAX = 100; // durée de vie maximale (en frames)
 
 class Particle {
-  static boolean useOpacity = false; // Toggle pour activer l'opacité liée au lifespan
-  static boolean useThickness = true; // Toggle pour activer l'épaisseur liée au lifespan
+  boolean useOpacity = true; // Toggle pour activer l'opacité liée au lifespan
+  boolean useThickness = false; // Toggle pour activer l'épaisseur liée au lifespan
 
   PVector pos, prevPos;
   color col;
@@ -120,7 +120,7 @@ class Particle {
     }
 
     if (useOpacity) {
-      stroke(interpolatedColor, fading);
+      stroke(interpolatedColor, fading * 255);
     } else {
       stroke(interpolatedColor);
     }
