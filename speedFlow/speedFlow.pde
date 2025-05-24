@@ -4,6 +4,7 @@ final int HEIGHT = 1000;
 
 // Global variables
 String finalImagePath = null;
+long flowSeed = 0; // Seed for the random number generator
 
 void settings() {
   size(WIDTH, HEIGHT, P2D);
@@ -12,11 +13,23 @@ void settings() {
 
 void setup() {
   colorMode(RGB, 255, 255, 255);
-  background(0);
+  resetSketch();
+}
+
+void setNewSeed() {
+  flowSeed = System.currentTimeMillis();
+  noiseSeed(flowSeed);
+  randomSeed(flowSeed);
 }
 
 void draw() {
   // Your generative art code here
+
+  // Affichage de la seed en haut à gauche, discret
+  fill(255, 180); // Blanc légèrement transparent
+  textAlign(LEFT, TOP);
+  textSize(9);
+  text("s:" + flowSeed, 6, 6);
 
   if (false) { // Replace with your condition to stop drawing
     // Save final frame to a temporary file
@@ -30,7 +43,7 @@ void draw() {
 void keyPressed() {
   if (key == 's' || key == 'S') {
     saveImage();
-  } else if (key == ENTER || key == '\n') {
+  } else if (key == 'n' || key == 'N') {
     resetSketch();
   }
 }
@@ -52,6 +65,7 @@ void saveImage() {
 }
 
 void resetSketch() {
+  setNewSeed();
   background(0);
   frameCount = 0;
   finalImagePath = null;
