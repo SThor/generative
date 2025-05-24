@@ -1,9 +1,9 @@
 # speed-flow: Flow-field de particules colorées
 
-- [ ] Générer une grille de flow-field basée sur du Perlin seedé
-  - [ ] Afficher la seed à l'écran et dans la console
-  - [ ] Permettre de changer la seed (touche dédiée)
-  - [ ] Mode debug : afficher la grille de vecteurs (basse résolution)
+- [x] Générer une grille de flow-field basée sur du Perlin seedé
+  - [x] Afficher la seed à l'écran et dans la console
+  - [x] Permettre de changer la seed (touche dédiée)
+  - [x] Mode debug : afficher la grille de vecteurs (basse résolution)
 
 - [ ] Particules
   - [ ] Créer une classe Particle (position, vitesse, couleur)
@@ -12,13 +12,13 @@
 
 - [ ] Contrôles clavier
   - [ ] Reset (r)
-  - [ ] Save (s)
-  - [ ] Debug (d)
-  - [ ] Nouvelle seed (n)
+  - [x] Save (s)
+  - [x] Debug (d)
+  - [x] Nouvelle seed (n)
   - [ ] Changer la palette de couleurs (c)
 
 - [ ] Affichage
-  - [ ] Afficher la seed et les paramètres à l'écran et/ou sur l'image sauvegardée
+  - [x] Afficher la seed et les paramètres à l'écran et/ou sur l'image sauvegardée
 
 - [ ] Optimisation
   - [ ] Tester le nombre de particules possible
