@@ -13,6 +13,12 @@ final float FLOW_NOISE_SCALE = 0.15; // Echelle du bruit pour le flow field
 final float FLOW_VECTOR_LEN = 0.4; // Longueur relative du vecteur (par rapport à la cellule)
 final float FLOW_ARROW_SIZE = 4; // Taille de la flèche
 
+// --- Particules configuration ---
+final int PARTICLE_COUNT = 200;
+final float PARTICLE_RADIUS = 1.5;
+
+ArrayList<Particle> particles; 
+
 void settings() {
   size(WIDTH, HEIGHT, P2D);
   smooth(8);
@@ -62,8 +68,24 @@ void drawFlowField() {
   noStroke();
 }
 
+void initParticles() {
+  particles = new ArrayList<Particle>();
+  for (int i = 0; i < PARTICLE_COUNT; i++) {
+    float x = random(WIDTH);
+    float y = random(HEIGHT);
+    float angle = random(TWO_PI);
+    float speed = random(0.5, 2.5); // à ajuster
+    PVector v0 = PVector.fromAngle(angle).mult(speed);
+    particles.add(new Particle(x, y, v0));
+  }
+}
+
 void draw() {
-  // Your generative art code here
+  // Affichage des particules
+  for (Particle p : particles) {
+    p.update();
+    p.display();
+  }
 
   // Affichage de la seed en haut à gauche, discret
   fill(255, 180); // Blanc légèrement transparent
@@ -117,5 +139,6 @@ void resetSketch() {
   background(0);
   frameCount = 0;
   finalImagePath = null;
+  initParticles();
   loop();
 }
