@@ -103,16 +103,16 @@ class Particle {
       interpolatedColor = PARTICLE_COLOR_FAST;
     }
 
-    // Calculer l'opacité en fonction du lifespan
-    float opacity = 255; // Opacité par défaut
+    // Calculer le fading en fonction du lifespan
+    float fading = 1; // Fading par défaut
     if (lifespan >= initialLifespan * 0.5) {
-      opacity = map(lifespan, initialLifespan * 0.5, initialLifespan, 255, 0);
+      fading = map(lifespan, initialLifespan * 0.5, initialLifespan, 1, 0);
     } else {
-      opacity = map(lifespan, 0, initialLifespan * 0.5, 0, 255);
+      fading = map(lifespan, 0, initialLifespan * 0.5, 0, 1);
     }
-    
-    stroke(interpolatedColor, opacity);
-    strokeWeight(PARTICLE_RADIUS * 2);
+
+    stroke(interpolatedColor, fading);
+    strokeWeight(PARTICLE_RADIUS * 2 * fading);
     line(prevPos.x, prevPos.y, pos.x, pos.y);
   }
 }
