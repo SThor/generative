@@ -7,6 +7,7 @@ uniform sampler2D texture;
 uniform vec2 resolution;
 uniform int kernelSize; // Must be odd, e.g. 3, 5, 7
 uniform float sigmaFactor; // Controls blur softness. Higher = softer, must be between 0 and 1
+uniform vec3 bgColor; // Background color (normalized RGB)
 
 void main() {
   vec2 uv = gl_FragCoord.xy / resolution.xy;
@@ -20,15 +21,21 @@ void main() {
   for (int x = -halfKernel; x <= halfKernel; x++) {
     for (int y = -halfKernel; y <= halfKernel; y++) {
       float dist = length(vec2(float(x), float(y)));
-      if (dist <= radius) { // Only sample within the circle
+      if (dist <= radius) {
         float sigma = float(kernelSize) * sigmaFactor;
         float weight = exp(-(dist * dist) / (2.0 * sigma * sigma));
         vec2 offset = vec2(float(x) * blurSize, float(y) * blurSize);
-        sum += texture2D(texture, uv + offset) * weight;
+        vec4 col = texture(texture, uv + offset);
+        col.rgb *= col.a; // Premultiply alpha
+        sum += col * weight;
         totalWeight += weight;
       }
     }
   }
   sum /= totalWeight;
-  gl_FragColor = sum;
+  float outAlpha = sum.a;
+  vec3 outColor = outAlpha > 0.0 ? sum.rgb / outAlpha : bgColor;
+  // Blend with background color if alpha < 1
+  outColor = mix(bgColor, outColor, outAlpha);
+  gl_FragColor = vec4(outColor, 1.0); // Output fully opaque
 }
