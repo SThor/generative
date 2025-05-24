@@ -6,7 +6,6 @@ final float FLOW_NOISE_SCALE = 0.15; // Echelle du bruit pour le flow field
 final float FLOW_VECTOR_LEN = 0.4; // Longueur relative du vecteur (par rapport à la cellule)
 final float FLOW_ARROW_SIZE = 4; // Taille de la flèche
 final int PARTICLE_COUNT = 200;
-final float PARTICLE_RADIUS = 1.5;
 
 // --- Global variables ---
 String finalImagePath = null;

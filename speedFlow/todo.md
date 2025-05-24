@@ -5,10 +5,11 @@
   - [x] Permettre de changer la seed (touche dédiée)
   - [x] Mode debug : afficher la grille de vecteurs (basse résolution)
 
-- [ ] Particules
-  - [ ] Créer une classe Particle (position, vitesse, couleur)
+- [x] Particules
+  - [x] Créer une classe Particle (position, vitesse, couleur)
   - [ ] Dessiner les trails (laisser une trace)
-  - [ ] Couleur dépendant de la vitesse instantanée (lerp entre 2-3 couleurs)
+  - [x] Couleur dépendant de la vitesse instantanée (lerp entre 2-3 couleurs)
+  - [x] Déplacer et encapsuler les constantes liées aux particules dans Particle.pde
 
 - [ ] Contrôles clavier
   - [ ] Reset (r)
