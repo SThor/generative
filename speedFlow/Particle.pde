@@ -7,7 +7,7 @@ final float PARTICLE_VELOCITY_MAX = 4.0; // vitesse max approx pour le mapping
 final float PARTICLE_RADIUS = 1.5;
 final float PARTICLE_ACCELERATION = 0.04; // force du flow-field appliquée à chaque update (diminuée)
 final float PARTICLE_VELOCITY_CAP = 2*PARTICLE_RADIUS; // vitesse maximale autorisée pour une particule
-final float PARTICLE_FRICTION = 0.02; // coefficient de frottement (réduction de la vitesse par frame)
+final float PARTICLE_FRICTION = 0.01; // coefficient de frottement (réduction de la vitesse par frame)
 final int PARTICLE_LIFESPAN_MIN = 50; // durée de vie minimale (en frames)
 final int PARTICLE_LIFESPAN_MAX = 150; // durée de vie maximale (en frames)
 
@@ -15,12 +15,14 @@ class Particle {
   PVector pos, prevPos;
   color col;
   int lifespan; // Durée de vie restante de la particule
+  int initialLifespan; // Durée de vie initiale de la particule
 
   Particle(float x, float y, PVector initialVelocity) {
     pos = new PVector(x, y);
     prevPos = PVector.sub(pos, initialVelocity); // Verlet: prevPos = pos - v0
     col = color(255);
     lifespan = int(random(PARTICLE_LIFESPAN_MIN, PARTICLE_LIFESPAN_MAX)); // Durée de vie aléatoire dans l'intervalle défini
+    initialLifespan = lifespan; // Enregistrer la durée de vie initiale
   }
 
   // La fonction getFlowFieldDirection doit retourner un PVector direction normalisé à la position donnée
@@ -79,6 +81,7 @@ class Particle {
       PVector newFlowDir = getFlowFieldDirectionAt(pos.x, pos.y);
       velocity.set(newFlowDir).mult(random(0.5, 2.5));
       lifespan = int(random(PARTICLE_LIFESPAN_MIN, PARTICLE_LIFESPAN_MAX));
+      initialLifespan = lifespan; // Réinitialiser la durée de vie initiale
       // Ajuster prevPos pour éviter les artefacts visuels
       prevPos.set(pos.x - velocity.x, pos.y - velocity.y);
     }
@@ -99,7 +102,16 @@ class Particle {
     } else {
       interpolatedColor = PARTICLE_COLOR_FAST;
     }
-    stroke(interpolatedColor);
+
+    // Calculer l'opacité en fonction du lifespan
+    float opacity = 255; // Opacité par défaut
+    if (lifespan >= initialLifespan * 0.5) {
+      opacity = map(lifespan, initialLifespan * 0.5, initialLifespan, 255, 0);
+    } else {
+      opacity = map(lifespan, 0, initialLifespan * 0.5, 0, 255);
+    }
+    
+    stroke(interpolatedColor, opacity);
     strokeWeight(PARTICLE_RADIUS * 2);
     line(prevPos.x, prevPos.y, pos.x, pos.y);
   }
