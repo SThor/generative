@@ -32,9 +32,19 @@ void setRandomSeed() {
   noiseSeed(seed);
 }
 
+// Helper to convert HSB to normalized RGB (0..1)
+float[] hsbToRgb(float h, float s, float b) {
+  color c = color(h, s, b);
+  float r = red(c) / 255.0;
+  float g = green(c) / 255.0;
+  float bl = blue(c) / 255.0;
+  return new float[] { r, g, bl };
+}
+
 void setup() {
   colorMode(HSB, 360, 100, 100, 100);
-  backgroundColor = color(360, 0, 100, 100);
+  // Try a non-white, non-black background color (e.g., light blue)
+  backgroundColor = color(200, 50, 90, 100); // HSB: blue hue, medium saturation, high brightness, fully opaque
   setRandomSeed();
   displayBuffer = createGraphics(WIDTH, HEIGHT, P2D);
   displayBuffer.smooth(8);
@@ -48,12 +58,22 @@ void setup() {
   blurShader.set("resolution", float(WIDTH), float(HEIGHT));
   blurShader.set("kernelSize", BLUR_KERNEL_SIZE);
   blurShader.set("sigmaFactor", BLUR_SIGMA_FACTOR);
+
+  float[] bgColorVec3 = hsbToRgb(
+    hue(backgroundColor),
+    saturation(backgroundColor),
+    brightness(backgroundColor)
+  );
+  blurShader.set("bgColor", bgColorVec3);
 }
 
 void draw() {
   image(displayBuffer, 0, 0);
 
   displayBuffer.beginDraw();
+  if (frameCount == 0) {
+    displayBuffer.background(backgroundColor);
+  }
   float rectWidth = width * RECT_WIDTH_RATIO;
   float rectHeight = height * RECT_HEIGHT_RATIO;
   float rectY = PADDING + frameCount; // Start from PADDING and move downwards
