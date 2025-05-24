@@ -12,6 +12,9 @@ final int PARTICLE_LIFESPAN_MIN = 50; // durée de vie minimale (en frames)
 final int PARTICLE_LIFESPAN_MAX = 150; // durée de vie maximale (en frames)
 
 class Particle {
+  static boolean useOpacity = false; // Toggle pour activer l'opacité liée au lifespan
+  static boolean useThickness = true; // Toggle pour activer l'épaisseur liée au lifespan
+
   PVector pos, prevPos;
   color col;
   int lifespan; // Durée de vie restante de la particule
@@ -111,8 +114,17 @@ class Particle {
       fading = map(lifespan, 0, initialLifespan * 0.5, 0, 1);
     }
 
-    stroke(interpolatedColor, fading);
-    strokeWeight(PARTICLE_RADIUS * 2 * fading);
+    float weight = PARTICLE_RADIUS * 2;
+    if (useThickness) {
+      weight *= fading;
+    }
+
+    if (useOpacity) {
+      stroke(interpolatedColor, fading);
+    } else {
+      stroke(interpolatedColor);
+    }
+    strokeWeight(weight);
     line(prevPos.x, prevPos.y, pos.x, pos.y);
   }
 }
