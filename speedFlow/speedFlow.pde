@@ -5,13 +5,14 @@ final int FLOW_GRID_SIZE = 30; // Nombre de cellules sur un axe
 final float FLOW_NOISE_SCALE = 0.15; // Echelle du bruit pour le flow field
 final float FLOW_VECTOR_LEN = 0.4; // Longueur relative du vecteur (par rapport à la cellule)
 final float FLOW_ARROW_SIZE = 4; // Taille de la flèche
-final int PARTICLE_COUNT = 200;
+final int PARTICLE_COUNT = 2000;
 
 // --- Global variables ---
 String finalImagePath = null;
 long flowSeed = 0; // Seed for le flow-field et random
 boolean debug = false; // Affichage du flow-field
 ArrayList<Particle> particles;
+boolean lifespanActive = true; // Control variable for lifespan toggling
 
 // --- Processing setup ---
 void settings() {
@@ -36,9 +37,9 @@ void initParticles() {
   for (int i = 0; i < PARTICLE_COUNT; i++) {
     float x = random(WIDTH);
     float y = random(HEIGHT);
-    float angle = random(TWO_PI);
+    PVector flowDir = getFlowFieldDirectionAt(x, y);
     float speed = random(0.5, 2.5);
-    PVector v0 = PVector.fromAngle(angle).mult(speed);
+    PVector v0 = PVector.fromAngle(flowDir.heading()).mult(speed);
     particles.add(new Particle(x, y, v0));
   }
 }
@@ -95,7 +96,7 @@ void draw() {
   for (Particle particle : particles) {
     // Récupérer la direction du flow-field à la position de la particule (normalisé)
     PVector flowDirection = getFlowFieldDirectionAt(particle.pos.x, particle.pos.y);
-    particle.update(flowDirection);
+    particle.update(flowDirection, particles);
     particle.display();
   }
   // Affichage de la seed
@@ -135,6 +136,8 @@ void keyPressed() {
   } else if (key == 'd' || key == 'D') {
     debug = !debug;
     clearAndRestartParticles();
+  } else if (key == 'l' || key == 'L') {
+    lifespanActive = !lifespanActive;
   }
 }
 
