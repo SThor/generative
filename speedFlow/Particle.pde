@@ -1,7 +1,4 @@
 // --- Constantes liées aux particules ---
-final color PARTICLE_COLOR_SLOW = color(255, 240, 150);  // jaune pastel
-final color PARTICLE_COLOR_MID = color(30, 220, 140);   // vert fluo marin
-final color PARTICLE_COLOR_FAST = color(10, 60, 120);   // bleu marin profond
 final float PARTICLE_VELOCITY_MIN = 0.0;
 final float PARTICLE_VELOCITY_MAX = 4.0; // vitesse max approx pour le mapping
 final float PARTICLE_RADIUS = 1.5;
@@ -130,15 +127,9 @@ class Particle {
     // Couleur dépendant de la vitesse instantanée (magnitude)
     float velocityMagnitude = PVector.dist(pos, prevPos);
     float interpolationValue = constrain(map(velocityMagnitude, PARTICLE_VELOCITY_MIN, PARTICLE_VELOCITY_MAX, 0, 1), 0, 1);
-    color interpolatedColor;
-    // Interpolation plus progressive :
-    if (interpolationValue <= 0.5) {
-      float t1 = map(interpolationValue, 0, 0.5, 0, 1);
-      interpolatedColor = lerpColor(PARTICLE_COLOR_SLOW, PARTICLE_COLOR_MID, t1);
-    } else {
-      float t2 = map(interpolationValue, 0.5, 1, 0, 1);
-      interpolatedColor = lerpColor(PARTICLE_COLOR_MID, PARTICLE_COLOR_FAST, t2);
-    }
+
+    // Utiliser la rampe de couleurs pour obtenir la couleur correspondante
+    color interpolatedColor = colorRamp.getColor(interpolationValue);
 
     // Calculer le fading en fonction du lifespan
     // Calcul du facteur d'opacité et d'épaisseur (0 à 1)

@@ -1,3 +1,6 @@
+// Import la bibliothèque de palettes de couleurs
+import nice.palettes.*;
+
 // --- Configuration ---
 final int WIDTH = 1000;
 final int HEIGHT = 1000;
@@ -17,12 +20,17 @@ final float[] FLOW_WEIGHTS = {0.5, 1, 0}; // Moitié noise, moitié diskBand
 final float BAND_MIN = 0.3;
 final float BAND_MAX = 0.6;
 
+// Couleurs et palette
+ColorPalette palette;       // Bibliothèque externe pour sélection de palettes
+ColorRamp colorRamp;        // Interpolation avancée entre couleurs
+
 // --- Global variables ---
 String finalImagePath = null;
 long flowSeed = 0; // Seed for le flow-field et random
 boolean debug = false; // Affichage du flow-field
 ArrayList<Particle> particles;
 boolean lifespanActive = true; // Control variable for lifespan toggling
+int paletteIndex = 0; // Index de la palette utilisée
 
 // --- Processing setup ---
 void settings() {
@@ -50,10 +58,10 @@ void setNewSeed() {
 void initParticles() {
   particles = new ArrayList<Particle>();
   for (int i = 0; i < PARTICLE_COUNT; i++) {
-    // float x = random(WIDTH);
-    // float y = random(HEIGHT);
-    float x = random(MARGIN, WIDTH - MARGIN);
-    float y = random(MARGIN, HEIGHT - MARGIN);
+    float x = random(WIDTH);
+    float y = random(HEIGHT);
+    // float x = random(MARGIN, WIDTH - MARGIN);
+    // float y = random(MARGIN, HEIGHT - MARGIN);
     PVector flowDir = getFlowFieldDirectionAt(x, y);
     float speed = random(0.5, 2.5);
     PVector v0 = PVector.fromAngle(flowDir.heading()).mult(speed);
@@ -73,7 +81,34 @@ void clearAndRestartParticles() {
 
 void resetSketch() {
   setNewSeed();
+  // Initialiser la rampe de couleurs
+  initColors();
   clearAndRestartParticles();
+}
+
+// Initialisation des couleurs et de la palette
+void initColors() {
+  color[] paletteColors = { 
+    color(255, 240, 150),  // jaune pastel
+    color(30, 220, 140),   // vert fluo marin (moyen)
+    color(10, 60, 120)     // bleu marin profond (rapide)
+  };
+  
+  // Si on utilise la bibliothèque ColorPalette externe
+  try {
+    palette = new ColorPalette(this);
+    paletteIndex = int(random(0, palette.getPaletteCount()));
+    // Récupérer une palette de la bibliothèque externe
+    paletteColors = palette.getPalette(paletteIndex);
+  } catch (Exception e) {
+    println("Bibliothèque ColorPalette non disponible, utilisation des couleurs par défaut");
+  }
+
+  // Option 1: Transitions uniformes
+  colorRamp = new ColorRamp(paletteColors);
+  
+  // Option 2: Transitions personnalisées (décommentez pour avoir une répartition différente)
+  //colorRamp = new ColorRamp(paletteColors, new float[] {0.1, 0.5, 0.7});
 }
 
 // --- Flow field ---
@@ -95,6 +130,38 @@ void drawFlowField() {
   noStroke();
 }
 
+void drawRandomVariables() {
+  // Préparation du texte de la seed pour calculer sa largeur
+  float textH = 8; // Hauteur fixe pour le texte
+  textSize(textH - 1);
+  String seedText = "s:" + flowSeed + " p:" + paletteIndex;
+  float textW = textWidth(seedText);
+
+  // Positionnement dans le coin inférieur droit
+  float x = WIDTH - textW - 5;
+  float y = HEIGHT - textH - 5;
+
+  // Extension de la palette autour du fond transparent
+  float paletteMargin = 2;
+  float swatchWidth = (textW + paletteMargin * 2) / colorRamp.colors.length;
+  float swatchHeight = textH + paletteMargin * 2;
+  for (int i = 0; i < colorRamp.colors.length; i++) {
+    fill(colorRamp.colors[i]);
+    noStroke();
+    rect(x - paletteMargin + (i * swatchWidth), y - paletteMargin, swatchWidth, swatchHeight);
+  }
+
+  // Fond semi-transparent limité au texte
+  fill(255, 200);
+  noStroke();
+  rect(x, y, textW, textH);
+
+  // Affichage de la seed et du paletteIndex
+  textAlign(LEFT, TOP);
+  fill(0);
+  text(seedText, x, y);
+}
+
 // --- Draw loop ---
 void draw() {
   // Affichage des particules
@@ -104,11 +171,10 @@ void draw() {
     particle.update(flowDirection, particles);
     particle.display();
   }
-  // Affichage de la seed
-  fill(255, 180);
-  textAlign(LEFT, TOP);
-  textSize(9);
-  text("s:" + flowSeed, 6, 6);  // Affichage du flow-field en mode debug
+
+  drawRandomVariables();
+  
+  // Affichage du flow-field en mode debug
   if (debug) {
     drawFlowField();
     // Affichage de la marge
