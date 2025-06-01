@@ -27,7 +27,50 @@ class Particle {
     lifespan = int(random(PARTICLE_LIFESPAN_MIN, PARTICLE_LIFESPAN_MAX)); // Durée de vie aléatoire dans l'intervalle défini
     initialLifespan = lifespan; // Enregistrer la durée de vie initiale
   }
-  // La fonction getFlowFieldDirection peut retourner un vecteur avec une magnitude variable
+  
+  // Vérifie si la particule est en dehors des marges définies
+  boolean isOutOfBounds() {
+    return (pos.x < MARGIN || pos.x >= WIDTH - MARGIN || pos.y < MARGIN || pos.y >= HEIGHT - MARGIN);
+  }
+  
+  /**
+   * Calcule la probabilité de survie d'une particule en fonction de sa position verticale
+   * Plus la particule est basse (y élevé), plus elle a de chances de survivre
+   *
+   * @return La probabilité de survie entre 0.0 et 1.0
+   */
+  float calculateSurvivalChance() {    
+    return map(pos.y, MARGIN * 1.1, HEIGHT, 0, 1);
+  }
+  
+  // Réinitialise la particule à une position aléatoire
+  // et lui assigne une nouvelle direction basée sur le flow-field
+  void respawn() {
+      pos.set(random(WIDTH), random(HEIGHT));
+      // pos.set(random(MARGIN, WIDTH - MARGIN), random(MARGIN, HEIGHT - MARGIN));
+      if (isOutOfBounds()) {
+        if (random(1.0) > calculateSurvivalChance()) {
+          respawn();
+          return;
+        }
+      }
+      PVector newFlowDir = getFlowFieldDirectionAt(pos.x, pos.y);
+      PVector velocity = new PVector().set(newFlowDir).mult(random(0.5, 2.5));
+      lifespan = int(random(PARTICLE_LIFESPAN_MIN, PARTICLE_LIFESPAN_MAX));
+      initialLifespan = lifespan; // Réinitialiser la durée de vie initiale
+      // Ajuster prevPos pour éviter les artefacts visuels
+      prevPos.set(pos.x - velocity.x, pos.y - velocity.y);
+  }
+  
+  /**
+   * Met à jour la particule en fonction de:
+   * - la direction du flow-field
+   * - la vitesse actuelle
+   * - la friction
+   * - la durée de vie
+   * - la position par rapport aux marges
+   * - etc.
+   */
   void update(PVector flowDirection, ArrayList<Particle> particles) {
     // Verlet integration: newPos = pos + (pos - prevPos) + acceleration
     PVector velocity = PVector.sub(pos, prevPos);
@@ -56,9 +99,21 @@ class Particle {
 
     prevPos.set(pos);
     pos.add(velocity);
-
-    if (pos.x < 0 || pos.x >= WIDTH || pos.y < 0 || pos.y >= HEIGHT) {
-      lifespan = 0; // Si la particule sort de l'écran, elle "meurt"
+      float escapeSpeed = PARTICLE_VELOCITY_CAP * 0.5; // Vitesse d'évasion pour les particules lentes
+    // Si la particule sort de la zone définie par la marge
+    // if (velocity.mag() > escapeSpeed && isOutOfBounds()) {
+    if (isOutOfBounds()) {      
+      // Si le nombre aléatoire est supérieur à la probabilité, on repositionne la particule
+      if (random(1.0) > calculateSurvivalChance()) {
+        respawn();
+        return; // Ne pas continuer l'update si la particule est réapparue
+      }
+      // Sinon, la particule reste en vie même en dehors des limites, avec une durée de vie réduite
+      // lifespan = min(lifespan, int(PARTICLE_LIFESPAN_MAX * 0.2)); // Durée de vie réduite pour les particules qui s'échappent
+      // lifespan = 2; // reste en vie à l'infini, mais super fine, donc cheveux d'ange à l'extérieur
+      // lifespan = min(lifespan, 10); // Reste en vie 10 frames max, donc juste petits points à l'extérieur
+      lifespan--;
+      initialLifespan--;
     }
 
     // Décrémenter la durée de vie
@@ -67,13 +122,7 @@ class Particle {
     // Vérifier si la particule est "morte"
     if (lifespan <= 0) {
       // Réapparaître la particule à une position aléatoire avec alignement au flow-field
-      pos.set(random(WIDTH), random(HEIGHT));
-      PVector newFlowDir = getFlowFieldDirectionAt(pos.x, pos.y);
-      velocity.set(newFlowDir).mult(random(0.5, 2.5));
-      lifespan = int(random(PARTICLE_LIFESPAN_MIN, PARTICLE_LIFESPAN_MAX));
-      initialLifespan = lifespan; // Réinitialiser la durée de vie initiale
-      // Ajuster prevPos pour éviter les artefacts visuels
-      prevPos.set(pos.x - velocity.x, pos.y - velocity.y);
+      respawn();
     }
   }
 

@@ -1,6 +1,7 @@
 // --- Configuration ---
 final int WIDTH = 1000;
 final int HEIGHT = 1000;
+final int MARGIN = 100; // Marge en pixels autour du flow field
 final int FLOW_GRID_SIZE = 30; // Nombre de cellules sur un axe
 final float FLOW_NOISE_SCALE = 0.15; // Echelle du bruit pour le flow field
 final float FLOW_VECTOR_LEN = 0.2; // Longueur du vecteur
@@ -49,8 +50,10 @@ void setNewSeed() {
 void initParticles() {
   particles = new ArrayList<Particle>();
   for (int i = 0; i < PARTICLE_COUNT; i++) {
-    float x = random(WIDTH);
-    float y = random(HEIGHT);
+    // float x = random(WIDTH);
+    // float y = random(HEIGHT);
+    float x = random(MARGIN, WIDTH - MARGIN);
+    float y = random(MARGIN, HEIGHT - MARGIN);
     PVector flowDir = getFlowFieldDirectionAt(x, y);
     float speed = random(0.5, 2.5);
     PVector v0 = PVector.fromAngle(flowDir.heading()).mult(speed);
@@ -105,9 +108,15 @@ void draw() {
   fill(255, 180);
   textAlign(LEFT, TOP);
   textSize(9);
-  text("s:" + flowSeed, 6, 6);
-  // Affichage du flow-field en mode debug
-  if (debug) drawFlowField();
+  text("s:" + flowSeed, 6, 6);  // Affichage du flow-field en mode debug
+  if (debug) {
+    drawFlowField();
+    // Affichage de la marge
+    noFill();
+    stroke(180, 100);
+    strokeWeight(1);
+    rect(MARGIN, MARGIN, WIDTH - 2 * MARGIN, HEIGHT - 2 * MARGIN);
+  }
   // (Autres affichages éventuels...)
 
   if (false) { // Replace with your condition to stop drawing
