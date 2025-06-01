@@ -15,7 +15,7 @@ float CELL_WIDTH, CELL_HEIGHT;
 // Centre de la grille
 float CENTER_X, CENTER_Y;
 // Poids pour les différents types de flow fields (noise, disk, diskBand)
-final float[] FLOW_WEIGHTS = {0.5, 1, 0}; // Moitié noise, moitié diskBand
+final float[] FLOW_WEIGHTS = {0.5, 0.5, 1};
 // Paramètres pour la bande dans flowFieldVectorDiskBand
 final float BAND_MIN = 0.3;
 final float BAND_MAX = 0.6;

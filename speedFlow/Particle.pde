@@ -36,14 +36,14 @@ class Particle {
    *
    * @return La probabilité de survie entre 0.0 et 1.0
    */
-  float calculateSurvivalChance() {    
-    return map(pos.y, MARGIN * 1.1, HEIGHT, 0, 1);
+  float calculateSurvivalChance() {
+    return map(pos.y, MARGIN * 1.1, HEIGHT - (MARGIN*0.8), 0, 1);
   }
   
   // Réinitialise la particule à une position aléatoire
   // et lui assigne une nouvelle direction basée sur le flow-field
   void respawn() {
-      pos.set(random(WIDTH), random(HEIGHT));
+      pos.set(random(-10, WIDTH+10), random(-10, HEIGHT+10));
       // pos.set(random(MARGIN, WIDTH - MARGIN), random(MARGIN, HEIGHT - MARGIN));
       if (isOutOfBounds()) {
         if (random(1.0) > calculateSurvivalChance()) {
@@ -92,7 +92,7 @@ class Particle {
     }
 
     // Application du frottement : réduction de la vitesse
-    velocity.mult(1 - PARTICLE_FRICTION);
+    // velocity.mult(1 - PARTICLE_FRICTION);
 
     prevPos.set(pos);
     pos.add(velocity);
@@ -109,8 +109,8 @@ class Particle {
       // lifespan = min(lifespan, int(PARTICLE_LIFESPAN_MAX * 0.2)); // Durée de vie réduite pour les particules qui s'échappent
       // lifespan = 2; // reste en vie à l'infini, mais super fine, donc cheveux d'ange à l'extérieur
       // lifespan = min(lifespan, 10); // Reste en vie 10 frames max, donc juste petits points à l'extérieur
-      lifespan--;
-      initialLifespan--;
+      //lifespan--;
+      //initialLifespan--;
     }
 
     // Décrémenter la durée de vie
