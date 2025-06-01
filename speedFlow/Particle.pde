@@ -13,7 +13,7 @@ final int PARTICLE_LIFESPAN_MAX = 100; // durée de vie maximale (en frames)
 
 class Particle {
   boolean useOpacity = true; // Toggle pour activer l'opacité liée au lifespan
-  boolean useThickness = false; // Toggle pour activer l'épaisseur liée au lifespan
+  boolean useThickness = true; // Toggle pour activer l'épaisseur liée au lifespan
 
   PVector pos, prevPos;
   color col;
@@ -27,12 +27,13 @@ class Particle {
     lifespan = int(random(PARTICLE_LIFESPAN_MIN, PARTICLE_LIFESPAN_MAX)); // Durée de vie aléatoire dans l'intervalle défini
     initialLifespan = lifespan; // Enregistrer la durée de vie initiale
   }
-
-  // La fonction getFlowFieldDirection doit retourner un PVector direction normalisé à la position donnée
+  // La fonction getFlowFieldDirection peut retourner un vecteur avec une magnitude variable
   void update(PVector flowDirection, ArrayList<Particle> particles) {
     // Verlet integration: newPos = pos + (pos - prevPos) + acceleration
     PVector velocity = PVector.sub(pos, prevPos);
-    velocity.add(PVector.mult(flowDirection, PARTICLE_ACCELERATION));
+      // Utiliser directement le vecteur du flow field comme force
+    // La magnitude du vecteur détermine naturellement la force appliquée
+    velocity.add(flowDirection);
 
     // // Répulsion locale
     // for (Particle other : particles) {
@@ -56,22 +57,8 @@ class Particle {
     prevPos.set(pos);
     pos.add(velocity);
 
-    // Bords en torus (wrap) + correction de prevPos pour éviter les artefacts
-    if (pos.x < 0) {
-      pos.x += WIDTH;
-      prevPos.x += WIDTH;
-    }
-    if (pos.x >= WIDTH) {
-      pos.x -= WIDTH;
-      prevPos.x -= WIDTH;
-    }
-    if (pos.y < 0) {
-      pos.y += HEIGHT;
-      prevPos.y += HEIGHT;
-    }
-    if (pos.y >= HEIGHT) {
-      pos.y -= HEIGHT;
-      prevPos.y -= HEIGHT;
+    if (pos.x < 0 || pos.x >= WIDTH || pos.y < 0 || pos.y >= HEIGHT) {
+      lifespan = 0; // Si la particule sort de l'écran, elle "meurt"
     }
 
     // Décrémenter la durée de vie
@@ -96,22 +83,26 @@ class Particle {
     float interpolationValue = constrain(map(velocityMagnitude, PARTICLE_VELOCITY_MIN, PARTICLE_VELOCITY_MAX, 0, 1), 0, 1);
     color interpolatedColor;
     // Interpolation plus progressive :
-    if (interpolationValue <= 0.33) {
-      float t1 = map(interpolationValue, 0, 0.33, 0, 1);
+    if (interpolationValue <= 0.5) {
+      float t1 = map(interpolationValue, 0, 0.5, 0, 1);
       interpolatedColor = lerpColor(PARTICLE_COLOR_SLOW, PARTICLE_COLOR_MID, t1);
-    } else if (interpolationValue <= 0.66) {
-      float t2 = map(interpolationValue, 0.33, 0.66, 0, 1);
-      interpolatedColor = lerpColor(PARTICLE_COLOR_MID, PARTICLE_COLOR_FAST, t2);
     } else {
-      interpolatedColor = PARTICLE_COLOR_FAST;
+      float t2 = map(interpolationValue, 0.5, 1, 0, 1);
+      interpolatedColor = lerpColor(PARTICLE_COLOR_MID, PARTICLE_COLOR_FAST, t2);
     }
 
     // Calculer le fading en fonction du lifespan
-    float fading = 1; // Fading par défaut
-    if (lifespan >= initialLifespan * 0.5) {
-      fading = map(lifespan, initialLifespan * 0.5, initialLifespan, 1, 0);
+    // Calcul du facteur d'opacité et d'épaisseur (0 à 1)
+    float fading;
+    float halfLife = initialLifespan * 0.5;
+    
+    // Effet de fondu: apparition puis disparition
+    if (lifespan > halfLife) {
+      // Première moitié de vie: apparition (0 → 1)
+      fading = map(lifespan, initialLifespan, halfLife, 0, 1);
     } else {
-      fading = map(lifespan, 0, initialLifespan * 0.5, 0, 1);
+      // Seconde moitié de vie: disparition (1 → 0)
+      fading = map(lifespan, halfLife, 0, 1, 0);
     }
 
     float weight = PARTICLE_RADIUS * 2;
