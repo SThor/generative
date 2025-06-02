@@ -35,6 +35,10 @@ boolean lifespanActive = true; // Control variable for lifespan toggling
 int paletteIndex = 0; // Index de la palette utilisée
 boolean flowFieldTimeActive = false; // Activer/désactiver l'évolution temporelle du flow field
 
+// --- Overrides pour seed et paletteIndex ---
+long overrideSeed = -1; // Mettre une valeur >0 pour forcer la seed
+int overridePaletteIndex = -1; // Mettre une valeur >=0 pour forcer la palette
+
 // --- Processing setup ---
 void settings() {
   size(WIDTH, HEIGHT, P2D);
@@ -53,7 +57,11 @@ void setup() {
 
 // --- Initialisation & reset ---
 void setNewSeed() {
-  flowSeed = System.currentTimeMillis();
+  if (overrideSeed != -1) {
+    flowSeed = overrideSeed;
+  } else {
+    flowSeed = System.currentTimeMillis();
+  }
   noiseSeed(flowSeed);
   randomSeed(flowSeed);
 }
@@ -100,7 +108,11 @@ void initColors() {
   // Si on utilise la bibliothèque ColorPalette externe
   try {
     palette = new ColorPalette(this);
-    paletteIndex = int(random(0, palette.getPaletteCount()));
+    if (overridePaletteIndex != -1) {
+      paletteIndex = overridePaletteIndex;
+    } else {
+      paletteIndex = int(random(0, palette.getPaletteCount()));
+    }
     // Récupérer une palette de la bibliothèque externe
     paletteColors = palette.getPalette(paletteIndex);
   } catch (Exception e) {
