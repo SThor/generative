@@ -14,8 +14,9 @@ final int PARTICLE_COUNT = 2000;
 float CELL_WIDTH, CELL_HEIGHT;
 // Centre de la grille
 float CENTER_X, CENTER_Y;
-// Poids pour les différents types de flow fields (noise, disk, diskBand)
-final float[] FLOW_WEIGHTS = {0.5, 0.5, 1};
+// Poids pour les différents types de flow fields (noise, disk, diskBand, sinX)
+final float[] FLOW_WEIGHTS = {1, 0, 0, 0};
+// final float[] FLOW_WEIGHTS = {0.5, 0.5, 1};
 // Paramètres pour la bande dans flowFieldVectorDiskBand
 final float BAND_MIN = 0.3;
 final float BAND_MAX = 0.6;
@@ -279,6 +280,25 @@ PVector flowFieldVectorDiskBand(int gx, int gy) {
   return vectorFromAngle(angle, FLOW_VECTOR_LEN);
 }
 
+// 4. Flow field en ondulations sinusoïdales horizontales
+PVector flowFieldVectorSinX(int gx, int gy) {
+  // Paramètres de l'ondulation
+  float frequency = 0.05;  // Fréquence de l'ondulation
+  float amplitude = 0.8;   // Force de l'ondulation
+  
+  // Position dans la grille
+  PVector pos = getCellPosition(gx, gy);
+  
+  // Composante constante horizontale
+  float vx = 1.0;
+  
+  // Composante verticale suivant la dérivée de sin(x)
+  // La dérivée de sin(x) est cos(x)
+  float vy = cos(pos.x * frequency) * amplitude;
+    
+  return new PVector(vx, vy).normalize().mult(FLOW_VECTOR_LEN);
+}
+
 // Combine plusieurs flowfields selon des poids
 PVector flowFieldVectorWeighted(int gx, int gy, float[] weights) {
   PVector v = new PVector(0, 0);
@@ -294,6 +314,10 @@ PVector flowFieldVectorWeighted(int gx, int gy, float[] weights) {
   if (weights.length > 2) {
     v.add(PVector.mult(flowFieldVectorDiskBand(gx, gy), weights[2]));
     total += weights[2];
+  }
+  if (weights.length > 3) {
+    v.add(PVector.mult(flowFieldVectorSinX(gx, gy), weights[3]));
+    total += weights[3];
   }
   if (total > 0) v.div(total); // Normalise la somme pondérée
   return v;
