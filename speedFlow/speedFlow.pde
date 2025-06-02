@@ -20,6 +20,7 @@ final float[] FLOW_WEIGHTS = {1, 0, 0, 0};
 // Paramètres pour la bande dans flowFieldVectorDiskBand
 final float BAND_MIN = 0.3;
 final float BAND_MAX = 0.6;
+final float NOISE_TIME_SPEED = 0.01; // Vitesse d'animation du bruit
 
 // Couleurs et palette
 ColorPalette palette;       // Bibliothèque externe pour sélection de palettes
@@ -32,6 +33,7 @@ boolean debug = false; // Affichage du flow-field
 ArrayList<Particle> particles;
 boolean lifespanActive = true; // Control variable for lifespan toggling
 int paletteIndex = 0; // Index de la palette utilisée
+boolean flowFieldTimeActive = false; // Activer/désactiver l'évolution temporelle du flow field
 
 // --- Processing setup ---
 void settings() {
@@ -253,9 +255,14 @@ PVector vectorFromAngle(float angle, float len) {
   return new PVector(cos(angle) * len, sin(angle) * len);
 }
 
-// Flow field basé sur le bruit de Perlin
+// Flow field basé sur le bruit de Perlin animé dans le temps
 PVector flowFieldVectorNoise(int gx, int gy) {
-  float angle = noise(gx * FLOW_NOISE_SCALE, gy * FLOW_NOISE_SCALE, flowSeed * 0.00001) * TWO_PI * 2;
+  float time = (flowFieldTimeActive ? float(frameCount) * NOISE_TIME_SPEED : 0);
+  float angle = noise(
+    gx * FLOW_NOISE_SCALE,
+    gy * FLOW_NOISE_SCALE,
+    time
+  ) * TWO_PI * 2;
   return vectorFromAngle(angle, FLOW_VECTOR_LEN);
 }
 
@@ -334,6 +341,8 @@ void keyPressed() {
     clearAndRestartParticles();
   } else if (key == 'l' || key == 'L') {
     lifespanActive = !lifespanActive;
+  } else if (key == 't' || key == 'T') {
+    flowFieldTimeActive = !flowFieldTimeActive;
   // } else if (key == 'o' || key == 'O') {
   //   Particle.useOpacity = !Particle.useOpacity;
   // } else if (key == 'h' || key == 'H') {
