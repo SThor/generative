@@ -15,7 +15,7 @@ float CELL_WIDTH, CELL_HEIGHT;
 // Centre de la grille
 float CENTER_X, CENTER_Y;
 // Poids pour les différents types de flow fields (noise, disk, diskBand, sinX)
-final float[] FLOW_WEIGHTS = {1, 0, 0, 0};
+final float[] FLOW_WEIGHTS = {1.5, 1.5, 1, 0};
 // final float[] FLOW_WEIGHTS = {0.5, 0.5, 1};
 // Paramètres pour la bande dans flowFieldVectorDiskBand
 final float BAND_MIN = 0.3;
@@ -106,24 +106,24 @@ void initColors() {
   };
   
   // Si on utilise la bibliothèque ColorPalette externe
-  try {
-    palette = new ColorPalette(this);
-    if (overridePaletteIndex != -1) {
-      paletteIndex = overridePaletteIndex;
-    } else {
-      paletteIndex = int(random(0, palette.getPaletteCount()));
-    }
-    // Récupérer une palette de la bibliothèque externe
-    paletteColors = palette.getPalette(paletteIndex);
-  } catch (Exception e) {
-    println("Bibliothèque ColorPalette non disponible, utilisation des couleurs par défaut");
-  }
+  // try {
+  //   palette = new ColorPalette(this);
+  //   if (overridePaletteIndex != -1) {
+  //     paletteIndex = overridePaletteIndex;
+  //   } else {
+  //     paletteIndex = int(random(0, palette.getPaletteCount()));
+  //   }
+  //   // Récupérer une palette de la bibliothèque externe
+  //   paletteColors = palette.getPalette(paletteIndex);
+  // } catch (Exception e) {
+  //   println("Bibliothèque ColorPalette non disponible, utilisation des couleurs par défaut");
+  // }
 
   // Option 1: Transitions uniformes
-  colorRamp = new ColorRamp(paletteColors);
+  // colorRamp = new ColorRamp(paletteColors);
   
   // Option 2: Transitions personnalisées (décommentez pour avoir une répartition différente)
-  //colorRamp = new ColorRamp(paletteColors, new float[] {0.1, 0.5, 0.7});
+  colorRamp = new ColorRamp(paletteColors, new float[] {0.1, 0.5, 0.7});
 }
 
 // --- Flow field ---
