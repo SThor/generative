@@ -27,10 +27,11 @@ A repository of my Processing-based generative art projects.
 
 To create a new project:
 
-1. Copy the `template/` folder
-2. Rename it to your project name
-3. Open the .pde file in Processing
-4. Modify and experiment!
+1. Run the `create_new_project.py` script. This will create a branch & copy the template project into a new folder.
+   - The script will ask for a name for the new project. This will be used as the branch name and folder name.
+   - Use it like this: `python .\create_new_project.py {project_name}`
+2. Open the .pde file in Processing
+3. Modify and experiment!
 
 ## Gallery
 
