@@ -14,6 +14,8 @@ color pencilColorCroisillions = color(0, 0, 0, 20); // Couleur des croisillions 
 int step = 2;                         // Nombre de subdivisions principales
 int substep = 2;                      // Nombre de subdivisions secondaires
 float radius = 400;                   // Rayon principal de l'arc gothique
+int rosaceSubcircles = 3;            // Nombre de subdivisions de la rosace
+boolean debugMode = false;           // Mode debug pour visualiser la géométrie
 
 // === FONCTIONS UTILITAIRES MATHÉMATIQUES ===
 
@@ -55,7 +57,16 @@ void mainStep() {
   //generateInteriorArcs(step);
 
   // Dessine l'arc gothique principal avec subdivisions récursives
-  gothicArc(width/2, height/2, radius, true, radius, step, substep);
+  // gothicArc(width/2, height/2, radius, true, radius, step, substep);
+
+  // Debug des rosaces
+  for (int i=0; i<12; i++) {
+    // dessine une grille de rosaces à des fins de test, chaque rosace est décalée
+    float offsetX = (i%3) * (width/3) * 0.5; // Décalage horizontal pour chaque rosace
+    float offsetY = (i/3) * (height/4) * 0.5; // Décalage vertical pour chaque rosace
+    simpleRosace(width * 0.1 + offsetX, height * 0.1 + offsetY, radius/4, i, 0);
+    text("Rosace " + i, width * 0.1 + offsetX - 20, height * 0.1 + offsetY + radius * 0.2);
+  }
 }
 
 /**
@@ -79,6 +90,9 @@ void setup() {
  * @param startAngle : angle de départ pour la première subdivision (en radians)
  */
 void simpleRosace(float centerX, float centerY, float diameter, int subcircles, float startAngle) {
+  // Évite les erreurs pour les cas extrêmes
+  if (subcircles <= 0) return;
+  
   // Dessine le cercle central
   pp.circle(centerX, centerY, diameter, false);
   
@@ -87,6 +101,44 @@ void simpleRosace(float centerX, float centerY, float diameter, int subcircles, 
   float subdiameter = diameter/2;
   float x, y, subAngle;
   
+  // Mode debug : dessine les rayons et triangles géométriques
+  if (debugMode) {    
+    // Dessine les rayons en rouge (points de contact fixes sur le cercle principal)
+    pp.setPencilColor(color(0, 100, 100)); // Rouge vif en HSB
+    for (int i = 0; i < subcircles; i++) {
+      // Angle entre chaque subdivision (point de jonction entre arcs)
+      float contactAngle = startAngle + (i + 0.5) * angle;
+      float contactX = centerX + (diameter/2) * cos(contactAngle);
+      float contactY = centerY + (diameter/2) * sin(contactAngle);
+      pp.line(centerX, centerY, contactX, contactY, false);
+    }
+    
+    // Dessine les triangles isocèles en vert
+    pp.setPencilColor(color(120, 100, 100)); // Vert vif en HSB
+    for (int i = 0; i < subcircles; i++) {
+      subAngle = startAngle + i * angle;
+      // Centre du sous-arc (sommet du triangle)
+      x = centerX + subdiameter/2 * cos(subAngle);
+      y = centerY + subdiameter/2 * sin(subAngle);
+      
+      // Points de contact adjacents (base du triangle isocèle)
+      float contactAngle1 = startAngle + (i - 0.5) * angle;
+      float contactAngle2 = startAngle + (i + 0.5) * angle;
+      float contact1X = centerX + (diameter/2) * cos(contactAngle1);
+      float contact1Y = centerY + (diameter/2) * sin(contactAngle1);
+      float contact2X = centerX + (diameter/2) * cos(contactAngle2);
+      float contact2Y = centerY + (diameter/2) * sin(contactAngle2);
+      
+      // Dessine le triangle isocèle
+      pp.line(x, y, contact1X, contact1Y, false); // Côté 1 (rayon de l'arc)
+      pp.line(x, y, contact2X, contact2Y, false); // Côté 2 (rayon de l'arc)
+      pp.line(contact1X, contact1Y, contact2X, contact2Y, false); // Base du triangle
+    }
+    
+    // Restaure la couleur originale
+    pp.setPencilColor(pencilColor);
+  }
+  
   // Dessine chaque arc autour du centre
   for (int i=0; i<subcircles; i++) {
     subAngle = startAngle + i*angle;
@@ -94,7 +146,8 @@ void simpleRosace(float centerX, float centerY, float diameter, int subcircles, 
     x = centerX + subdiameter/2*cos(subAngle);
     y = centerY + subdiameter/2*sin(subAngle);
     // Dessine l'arc avec une ouverture de PI/3 (60 degrés)
-    pp.arc(x, y, subdiameter, subAngle - HALF_PI - PI/6, subAngle + HALF_PI + PI/6, false);
+    float halfAngle = HALF_PI + (PI/subcircles)*0.5; // PI/6
+    pp.arc(x, y, subdiameter, subAngle - halfAngle, subAngle + halfAngle, false);
   }
 }
 
@@ -139,8 +192,8 @@ void gothicArc(float centerX, float centerY, float radius, boolean showTail, flo
     }
     
     // Ajoute une rosace décorative en haut de l'arc principal
-    simpleRosace(centerX, centerY - triangleHeight(radius, 0.75*radius), radius/2, 4, 3*HALF_PI);
-    
+    simpleRosace(centerX, centerY - triangleHeight(radius, 0.75*radius), radius/2, rosaceSubcircles, 3*HALF_PI);
+
   } else {
     // === PHASE FINALE : dessine les motifs de remplissage (lignes croisées) ===
     
@@ -279,6 +332,15 @@ void keyTyped() {
   }
   if (key == 'm') {
     substep--;              // Diminue le niveau de récursion
+  }
+  if (key == 'o') {
+    rosaceSubcircles++;  // Augmente le nombre de subdivisions de la rosace
+  }
+  if (key == 'l') {
+    rosaceSubcircles--;  // Diminue le nombre de subdivisions de la rosace
+  }
+  if (key == 'd' || key == 'D') {
+    debugMode = !debugMode;  // Toggle le mode debug
   }
   mainStep();               // Redessine avec les nouveaux paramètres
 }
