@@ -146,8 +146,7 @@ void simpleRosace(float centerX, float centerY, float diameter, int subcircles, 
     x = centerX + subdiameter/2*cos(subAngle);
     y = centerY + subdiameter/2*sin(subAngle);
     // Dessine l'arc avec une ouverture de PI/3 (60 degrés)
-    float halfAngle = HALF_PI + (PI/subcircles)*0.5; // PI/6
-    pp.arc(x, y, subdiameter, subAngle - halfAngle, subAngle + halfAngle, false);
+    pp.arc(x, y, subdiameter, subAngle - angle, subAngle + angle, false);
   }
 }
 
