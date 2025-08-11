@@ -1,21 +1,22 @@
 import paperandpencil.*;
 
 // === VARIABLES GLOBALES ===
-PaperAndPencil pp;                    // Instance de la bibliothèque PaperAndPencil
-float topMargin = 0, leftMargin = 0;  // Marges (non utilisées actuellement)
-float xOffset = 340;                  // Décalage horizontal (non utilisé actuellement)
-float yOffset = 310;                  // Décalage vertical (non utilisé actuellement)
-float minDiameter = 80;               // Diamètre minimum (non utilisé actuellement)
-float maxDiameter;                    // Diamètre maximum (non utilisé actuellement)
+PaperAndPencil pp;                   // Instance de la bibliothèque PaperAndPencil
+float topMargin = 0, leftMargin = 0; // Marges (non utilisées actuellement)
+float xOffset = 340;                 // Décalage horizontal (non utilisé actuellement)
+float yOffset = 310;                 // Décalage vertical (non utilisé actuellement)
+float minDiameter = 80;              // Diamètre minimum (non utilisé actuellement)
+float maxDiameter;                   // Diamètre maximum (non utilisé actuellement)
 float x1, y1, x2, y2 = 0;            // Coordonnées pour le dessin à la souris
 //color pencilColor = color(0, 0, 0, 30);  // Couleur du crayon (version éclaircie)
 color pencilColor = color(0, 0, 0, 0);     // Couleur du crayon (version opaque)
 color pencilColorCroisillions = color(0, 0, 0, 20); // Couleur des croisillions (lignes croisées)
-int step = 2;                         // Nombre de subdivisions principales
-int substep = 2;                      // Nombre de subdivisions secondaires
-float radius = 400;                   // Rayon principal de l'arc gothique
+int step = 2;                        // Nombre de subdivisions principales
+int substep = 2;                     // Nombre de subdivisions secondaires
+float radius = 400;                  // Rayon principal de l'arc gothique
 int rosaceSubcircles = 3;            // Nombre de subdivisions de la rosace
 boolean debugMode = false;           // Mode debug pour visualiser la géométrie
+PGraphics mask;                      // Masque pour la bibliothèque Paper and Pencil
 
 // === FONCTIONS UTILITAIRES MATHÉMATIQUES ===
 
@@ -56,17 +57,23 @@ void mainStep() {
   //gothicArc(width/2, height/2, radius, true, radius, false);
   //generateInteriorArcs(step);
 
+  mask = pp.resetMask();
+  mask.beginDraw();
+  mask.clear();
+  mask.noStroke();
+  mask.fill(255);
+  mask.blendMode(REPLACE);
   // Dessine l'arc gothique principal avec subdivisions récursives
-  // gothicArc(width/2, height/2, radius, true, radius, step, substep);
+  gothicArc(width/2, height/2, radius, true, radius, step, substep);
 
   // Debug des rosaces
-  for (int i=0; i<12; i++) {
-    // dessine une grille de rosaces à des fins de test, chaque rosace est décalée
-    float offsetX = (i%3) * (width/3) * 0.5; // Décalage horizontal pour chaque rosace
-    float offsetY = (i/3) * (height/4) * 0.5; // Décalage vertical pour chaque rosace
-    simpleRosace(width * 0.1 + offsetX, height * 0.1 + offsetY, radius/4, i, 0);
-    text("Rosace " + i, width * 0.1 + offsetX - 20, height * 0.1 + offsetY + radius * 0.2);
-  }
+  // for (int i=0; i<12; i++) {
+  //   // dessine une grille de rosaces à des fins de test, chaque rosace est décalée
+  //   float offsetX = (i%3) * (width/3) * 0.5; // Décalage horizontal pour chaque rosace
+  //   float offsetY = (i/3) * (height/4) * 0.5; // Décalage vertical pour chaque rosace
+  //   simpleRosace(width * 0.1 + offsetX, height * 0.1 + offsetY, radius/4, i, 0);
+  //   text("Rosace " + i, width * 0.1 + offsetX - 20, height * 0.1 + offsetY + radius * 0.2);
+  // }
 }
 
 /**
@@ -177,8 +184,7 @@ void gothicArc(float centerX, float centerY, float radius, boolean showTail, flo
   // Dessine d'abord l'arc principal
   gothicArc(centerX, centerY, radius, showTail, tail, recursion == 0);
   
-  if (recursion > 0) {
-    // === PHASE RÉCURSIVE : crée des sous-arcs ===
+  if (recursion > 0) { // === PHASE RÉCURSIVE : crée des sous-arcs ===
     
     // Calcule l'origine pour aligner les sous-arcs
     float origin = centerX-radius/2;
@@ -193,8 +199,15 @@ void gothicArc(float centerX, float centerY, float radius, boolean showTail, flo
     // Ajoute une rosace décorative en haut de l'arc principal
     simpleRosace(centerX, centerY - triangleHeight(radius, 0.75*radius), radius/2, rosaceSubcircles, 3*HALF_PI);
 
-  } else {
-    // === PHASE FINALE : dessine les motifs de remplissage (lignes croisées) ===
+  } else { // === PHASE FINALE : dessine les motifs de remplissage (lignes croisées) ===
+
+    // finalise et applique le masque
+    mask.endDraw();
+    reverseMask(mask);
+    if (debugMode) {
+      image(mask, 0, 0); // Affiche le masque sur l'écran pour le débogage
+    }
+    pp.useMask();
     
     pp.setPencilColor(pencilColorCroisillions);  // Transparence légère pour les lignes
     float x, y, a, b, x1, y1, y2;
@@ -227,6 +240,7 @@ void gothicArc(float centerX, float centerY, float radius, boolean showTail, flo
     
     // Remet la couleur du crayon à la valeur globale
     pp.setPencilColor(pencilColor);
+    mask = pp.resetMask();  // Réinitialise le masque pour les futurs dessins
   }
 }
 
@@ -245,18 +259,33 @@ void gothicArc(float centerX, float centerY, float radius, boolean showTail, flo
     pp.line(centerX - radius/2, centerY, centerX - radius/2, centerY + tail, false);
     pp.line(centerX + radius/2, centerY, centerX + radius/2, centerY + tail, false);
   }
+  mask.rect(centerX - radius/2, centerY, radius, tail); // Rectangle pour le masque
 
   // Dessine les deux arcs principaux qui forment la pointe gothique
   pp.arc(centerX - radius/2, centerY, 2*radius, -PI/3, 0, false);       // Arc gauche
   pp.arc(centerX + radius/2, centerY, 2*radius, PI, PI+PI/3, false);     // Arc droit
-
+  
+  // dessine les deux arcs principaux dans le masque
+  mask.fill(255);
+  mask.beginShape();
   if (subarcs) {
-    // Ajoute des arcs décoratifs intérieurs pour plus de détail
+    // Ajoute des arcs intérieurs
     pp.arc(centerX, centerY, radius, PI, PI+PI/3, false);
     pp.arc(centerX + radius/4, centerY - triangleHeight(radius/2), radius, PI, PI+PI/3, false);
     pp.arc(centerX - radius/4, centerY - triangleHeight(radius/2), radius, -PI/3, 0, false);
     pp.arc(centerX, centerY, radius, -PI/3, 0, false);
+
+    // Dessine les sous-arcs dans le masque
+    drawVertexArc(mask, centerX, centerY, radius, PI, PI+PI/3); // arc bas gauche
+    drawVertexArc(mask, centerX + radius/4, centerY - triangleHeight(radius/2), radius, PI, PI+PI/3); // arc haut gauche
+    drawVertexArc(mask, centerX - radius/4, centerY - triangleHeight(radius/2), radius, -PI/3, 0); // arc haut droit
+    drawVertexArc(mask, centerX, centerY, radius, -PI/3, 0); // arc bas droit
+  } else {
+    // Dessine les arcs principaux dans le masque
+    drawVertexArc(mask, centerX + radius/2, centerY, 2*radius, PI, PI+PI/3); // arc gauche
+    drawVertexArc(mask, centerX - radius/2, centerY, 2*radius, -PI/3, 0); // arc droit
   }
+  mask.endShape(CLOSE);
 }
 
 /**
@@ -270,6 +299,27 @@ void generateInteriorArcs(int qty) {
   for (int i=0; i<qty; i++) {
     // Crée chaque arc à intervalles réguliers
     gothicArc(origin + (i+0.5)*subradius, height/2, subradius, false, radius, substep);
+  }
+}
+
+// Inverse le canal alpha d'un PGraphics (utile pour les masques)
+void reverseMask(PGraphics pg) {
+  pg.loadPixels();
+  for (int i = 0; i < pg.pixels.length; i++) {
+    int alpha = (pg.pixels[i] >> 24) & 0xFF;
+    alpha = 255 - alpha;
+    pg.pixels[i] = (alpha << 24) | (pg.pixels[i] & 0x00FFFFFF);
+  }
+  pg.updatePixels();
+}
+
+void drawVertexArc(PGraphics pg, float centerX, float centerY, float diameter, float startAngle, float endAngle) {
+  float baseIncrement = 0.15f;
+  float x, y;
+  for (float theta = startAngle; theta < endAngle; theta += baseIncrement/diameter) {
+      x = centerX + diameter/2 * cos(theta);
+      y = centerY + diameter/2 * sin(theta);
+      pg.vertex(x, y);
   }
 }
 
